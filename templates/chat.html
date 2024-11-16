@@ -79,10 +79,6 @@
         <div class="w-full h-full overflow-y-auto mt-4">
           <div id="chat-messages" class="flex flex-col gap-4 p-2">
             <div class="flex flex-row w-full items-start justify-start">
-              <div class="h-5 w-5 rounded-full bg-green-500 me-2"></div>
-              <div class="bg-[#303030] rounded-xl p-2 px-4 max-w-[600px]">
-                
-              </div>
             </div>
           </div>
         </div>
@@ -280,7 +276,7 @@
               </div>
           `;
           }
-          else {
+          else 
             messageDiv.innerHTML = `
               <div class="flex flex-row w-full items-start justify-start">
                 <div class="h-5 w-5 rounded-full bg-green-500 me-2"></div>
@@ -289,7 +285,7 @@
                 </div>
               </div>
           `;
-          }
+          
         }
 
         messageDiv.className = "flex flex-col gap-4 p-2";
@@ -346,7 +342,7 @@
         try {
           const response = await fetch(`/history/${conversationId}`);
           const history = await response.json();
-
+          console.log(history);
           // Clear current messages
           const messagesDiv = document.getElementById("chat-messages");
           messagesDiv.innerHTML = "";
@@ -355,7 +351,10 @@
           history.forEach((msg) => {
             if (msg.role === "user") {
               displayMessage(msg.content, "user");
-            } else if (msg.role === "assistant") {
+            } else if (msg.role === "assistant" && msg.content != null) {
+              displayMessage(msg.content, "bot");
+            }
+            else if(msg.role === "tool") {
               displayMessage(msg.content, "bot");
             }
           });

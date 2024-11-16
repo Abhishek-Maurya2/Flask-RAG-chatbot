@@ -7,17 +7,36 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import mimetypes
+import base64
+import io
+import json
+import qrcode
 
 
 app = Flask(__name__)
-api_key = os.getenv("GROQ_API_KEY")
-if not api_key:
-    raise ValueError("GROQ_API_KEY environment variable not set")
-client = Groq(api_key=api_key)
+client = Groq(api_key="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")
 conversations = {}
 
 embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 vector_store = None
+
+def generate_qr_code(data: str) -> str:
+    """Generate QR code and return as base64 string"""
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Convert to base64
+    buffered = io.BytesIO()
+    img.save(buffered, format="PNG")
+    return base64.b64encode(buffered.getvalue()).decode()
+
 
 def initialize_knowledge_base(file):
     global vector_store
@@ -94,6 +113,25 @@ def get_bot_response(user_query, file, conversation_id):
             }
         ]
 
+    tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "generate_qr_code",
+                    "description": "Generate a QR code from text data",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "string",
+                                "description": "The text to encode in QR code"
+                            }
+                        },
+                        "required": ["data"]
+                    }
+                }
+            }
+        ]
     try:
         # Add user message to history
         if file:
@@ -102,19 +140,49 @@ def get_bot_response(user_query, file, conversation_id):
             conversations[conversation_id].append({"role": "user", "content": f"Context: {context}\n\nQuestion: {user_query}"})
         else:
             conversations[conversation_id].append({"role": "user", "content": user_query})
+        
 
-        # Get response
+        # Get response from bot
         response = client.chat.completions.create(
             messages=conversations[conversation_id],
             model="llama3-groq-70b-8192-tool-use-preview",
+            tools=tools,
+            tool_choice="auto"
         )
 
         # Add bot response to history
-        bot_message = response.choices[0].message.content
-        conversations[conversation_id].append(
-            {"role": "assistant", "content": bot_message}
-        )
+        response_message = response.choices[0].message
+        tool_calls = response_message.tool_calls
 
+        if tool_calls:
+            # Handle tool calls
+            conversations[conversation_id].append(
+                {"role": "assistant", "content": response_message.content}
+            )
+            
+            for tool_call in tool_calls:
+                if tool_call.function.name == "generate_qr_code":
+                    function_args = json.loads(tool_call.function.arguments)
+                    qr_base64 = generate_qr_code(function_args["data"])
+                    
+                    # Add tool response
+                    conversations[conversation_id].append({
+                        "tool_call_id": tool_call.id,
+                        "role": "tool",
+                        "name": "generate_qr_code",
+                        "content": f"data:image/png;base64,{qr_base64}"
+                    })
+
+            # Get final response
+            second_response = client.chat.completions.create(
+                messages=conversations[conversation_id],
+                model="llama3-groq-70b-8192-tool-use-preview"
+            )
+            bot_message = second_response.choices[0].message.content
+        else:
+            bot_message = response_message.content
+
+        conversations[conversation_id].append({"role": "assistant", "content": bot_message})
         return bot_message
 
     except Exception as e:

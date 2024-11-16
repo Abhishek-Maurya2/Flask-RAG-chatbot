@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+    />
+    <title>Chat with Luna</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+    />
+  </head>
+  <body class="bg-[#212121] text-white h-screen w-full flex flex-row">
+    <div
+      id="nav-bar"
+      class="bg-[#171717] rounded-xl m-2 w-full sm:w-[250px] flex flex-col items-start gap-2 px-4 py-2"
+    >
+      <div class="flex items-center justify-between w-full gap-2">
+        <p class="text-2xl font-bold text-white">Luna Ai</p>
+        <button
+          onclick="toggleSideNavigation()"
+          class="material-symbols-outlined hover:bg-[#ffffff33] rounded-full p-2"
+        >
+          side_navigation
+        </button>
+      </div>
+      <!-- new chat -->
+      <button
+        onclick="newChat()"
+        class="flex items-center gap-2 mt-2 bg-[#ffffff22] hover:bg-[#ffffff33] w-full p-2 py-4 rounded-md"
+      >
+        <span
+          class="material-symbols-outlined flex items-center justify-center p-0 m-0"
+        >
+          chat
+        </span>
+        New Chat
+      </button>
+      <!-- history -->
+      <div class="w-full overflow-y-auto mt-1">
+        <p class="text-xl my-2 px-2">History</p>
+        <div id="history" class="flex flex-col gap-1">
+          <p class="py-2 px-2 hover:bg-[#ffffff33] rounded text-lg truncate">
+            what is luna ai?t is luna ai?t is luna ai?t is luna ai?
+          </p>
+        </div>
+      </div>
+      <!-- clear hostory -->
+      <button
+        onclick="clearHistory()"
+        class="bg-[#ff0000] hover:bg-[#ff0000] w-full p-2 py-4 rounded-md"
+      >
+        Clear History
+      </button>
+    </div>
+    <!-- right -->
+    <div class="w-full h-[90vh] sm:h-full">
+      <div class="w-full h-full flex flex-col px-4">
+        <!-- header -->
+        <div class="flex gap-2 items-center mt-4">
+          <button
+            id="toggle-side-navigation"
+            onclick="toggleSideNavigation()"
+            class="hidden material-symbols-outlined hover:bg-[#ffffff33] rounded-full p-2"
+          >
+            side_navigation
+          </button>
+          <p
+            id="toggle-side-navigation"
+            class="hidden text-2xl font-bold text-white"
+          >
+            Luna Ai
+          </p>
+        </div>
+        <!-- chat -->
+        <div class="w-full h-full overflow-y-auto mt-4">
+          <div id="chat-messages" class="flex flex-col gap-4 p-2">
+            <div class="flex flex-row w-full items-start justify-start">
+              <div class="h-5 w-5 rounded-full bg-green-500 me-2"></div>
+              <div class="bg-[#303030] rounded-xl p-2 px-4 max-w-[600px]">
+                
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- dock -->
+        <div class="sm:mb-4 w-full flex flex-col items-center justify-center">
+          <div
+            class="flex flex-col items-start w-full sm:w-[80%] bg-[#2f2f2f] rounded-[30px] overflow-hidden p-2.5"
+          >
+            <div
+              id="attach-file"
+              class="hidden ms-12 p-2 rounded-xl flex gap-2 items-center bg-[#212121]"
+            >
+              <div class="h-10 w-10 bg-red-500 rounded-md"></div>
+              <div class="flex flex-col">
+                <p id="attach-file-name"></p>
+                <p id="attach-file-type" class="text-sm"></p>
+              </div>
+            </div>
+            <div class="flex w-full">
+              <input type="file" id="file-input" class="hidden" />
+              <label
+                for="file-input"
+                class="hover:bg-[#ffffff11] p-2 rounded-full cursor-pointer"
+              >
+                <span
+                  class="material-symbols-outlined flex items-center justify-center p-0 m-0"
+                >
+                  attach_file
+                </span>
+              </label>
+              <input
+                type="text"
+                id="user-input"
+                class="w-full p-2 bg-[#2f2f2f] focus:outline-none text-white"
+                placeholder="Type your message..."
+              />
+              <button
+                onclick="sendMessage()"
+                class="bg-white text-black p-2 rounded-full"
+              >
+                <span
+                  class="material-symbols-outlined flex items-center justify-center p-0 m-0 rotate-90"
+                >
+                  arrow_left_alt
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Add debounce utility
+      function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      }
+      // Handle responsive navigation
+      function handleResponsiveNav() {
+        const navBar = document.getElementById("nav-bar");
+        const toggleNav = document.querySelectorAll("#toggle-side-navigation");
+        toggleNav.forEach((element) => {
+          if (window.innerWidth <= 768) {
+            navBar.classList.add("hidden");
+            element.classList.remove("hidden");
+          } else {
+            navBar.classList.remove("hidden");
+            element.classList.add("hidden");
+          }
+        });
+      }
+      // Add event listeners
+      window.addEventListener("load", handleResponsiveNav);
+      window.addEventListener("resize", debounce(handleResponsiveNav, 250));
+      // Cleanup function if needed
+      function cleanup() {
+        window.removeEventListener("load", handleResponsiveNav);
+        window.removeEventListener(
+          "resize",
+          debounce(handleResponsiveNav, 250)
+        );
+      }
+
+      function toggleSideNavigation() {
+        const navBar = document.getElementById("nav-bar");
+        navBar.classList.toggle("hidden");
+        const chat_nav_toggle = document.querySelectorAll(
+          "#toggle-side-navigation"
+        );
+        chat_nav_toggle.forEach((element) => {
+          element.classList.toggle("hidden");
+        });
+      }
+
+      var conversationId = Date.now().toString();
+
+      document.getElementById("file-input").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        const attachFile = document.getElementById("attach-file");
+        const attachFileName = document.getElementById("attach-file-name");
+        const attachFileType = document.getElementById("attach-file-type");
+
+        attachFile.classList.remove("hidden");
+        attachFileName.textContent = file.name;
+        attachFileType.textContent = file.type;
+      });
+
+      function sendMessage() {
+        const input = document.getElementById("user-input");
+        const fileInput = document.getElementById("file-input");
+        const message = input.value.trim();
+        const file = fileInput.files[0];
+
+        if (!message) return;
+
+        // Create FormData
+        const formData = new FormData();
+        formData.append("conversation_id", conversationId);
+        formData.append("message", message);
+        if (file) {
+          formData.append("file", file);
+        }
+
+        // Display user message
+        if (message && !file) {
+          displayMessage(message, "user");
+        } else {
+          displayMessage(message, "user-file");
+        }
+
+        // Clear inputs
+        input.value = "";
+        fileInput.value = "";
+        document.getElementById("attach-file").classList.add("hidden");
+
+        fetch("/chat", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              displayMessage(data.error, "bot");
+            } else {
+              displayMessage(data.response, "bot");
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            displayMessage("Failed to send message", "bot");
+          });
+      }
+
+      function displayMessage(message, role) {
+        console.log(role, message);
+        const messagesDiv = document.getElementById("chat-messages");
+        const messageDiv = document.createElement("div");
+
+        if (role === "user") {
+          messageDiv.innerHTML = `
+              <div class="flex flex-row w-full items-end justify-end">
+                  <div class="bg-[#303030] rounded-xl p-2 px-4 max-w-[600px] text-end">
+                      ${message}
+                  </div>
+                  <div class="h-5 w-5 ms-2 rounded-full bg-red-500"></div>
+              </div>
+
+          `;
+        } else if (role === "user-file") {
+          messageDiv.innerHTML = `
+              <div class="flex flex-row w-full items-end justify-end">
+                  <div class="bg-[#303030] rounded-xl p-2 px-4 max-w-[600px] text-end">
+                      ${message}
+                  </div>
+                  <div class="h-5 w-5 ms-2 rounded-sm bg-red-500"></div>
+              </div>
+
+          `;
+        } else {
+          if (message.includes("data:image/png;base64,")) {
+            messageDiv.innerHTML = `
+              <div class="flex flex-row w-full items-start justify-start">
+                <div class="h-5 w-5 rounded-full bg-green-500 me-2"></div>
+                <div class="bg-[#303030] rounded-xl p-2 px-4 max-w-[600px]">
+                  <img src="${message}" alt="image" class="bg-white h-44 w-44 rounded-md" />
+                </div>
+              </div>
+          `;
+          }
+          else {
+            messageDiv.innerHTML = `
+              <div class="flex flex-row w-full items-start justify-start">
+                <div class="h-5 w-5 rounded-full bg-green-500 me-2"></div>
+                <div class="bg-[#303030] rounded-xl p-2 px-4 max-w-[600px]">
+                  ${message}
+                </div>
+              </div>
+          `;
+          }
+        }
+
+        messageDiv.className = "flex flex-col gap-4 p-2";
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+
+      document
+        .getElementById("user-input")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") {
+            sendMessage();
+          }
+        });
+
+      //list history
+      async function listHistory() {
+        try {
+          const response = await fetch("/list-history");
+          const historyData = await response.json();
+          const historyDiv = document.getElementById("history");
+          historyDiv.innerHTML = "";
+          const conversationIds = Object.keys(historyData);
+
+          conversationIds.forEach((conversationId) => {
+            const historyItem = document.createElement("p");
+            historyItem.className =
+              "py-2 px-2 hover:bg-[#ffffff33] rounded text-lg truncate";
+
+            // Get first message from conversation to show as preview
+            const messages = historyData[conversationId];
+            const preview =
+              messages.find((msg) => msg.role === "user")?.content ||
+              "Empty conversation";
+
+            historyItem.textContent = `${preview}`;
+            historyItem.addEventListener("click", () =>
+              loadHistory(conversationId)
+            );
+            historyDiv.appendChild(historyItem);
+          });
+        } catch (error) {
+          console.error("Error loading history:", error);
+          const historyDiv = document.getElementById("history");
+          history;
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        listHistory();
+      });
+
+      async function loadHistory(conversationId) {
+        try {
+          const response = await fetch(`/history/${conversationId}`);
+          const history = await response.json();
+
+          // Clear current messages
+          const messagesDiv = document.getElementById("chat-messages");
+          messagesDiv.innerHTML = "";
+
+          // Display each message from history
+          history.forEach((msg) => {
+            if (msg.role === "user") {
+              displayMessage(msg.content, "user");
+            } else if (msg.role === "assistant") {
+              displayMessage(msg.content, "bot");
+            }
+          });
+
+          // Scroll to bottom
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        } catch (error) {
+          console.error("Error loading history:", error);
+          displayMessage("Error loading chat history", "error");
+        }
+      }
+
+      // clear history
+      async function clearHistory() {
+        try {
+          const response = await fetch("/clear-history");
+          if (response.ok) {
+            listHistory();
+          } else {
+            console.error("Error clearing history");
+          }
+        } catch (error) {
+          console.error("Error clearing history:", error);
+        }
+      }
+      // new chat
+      async function newChat() {
+        conversationId = Date.now().toString();
+        const messagesDiv = document.getElementById("chat-messages");
+        messagesDiv.innerHTML = "";
+      }
+    </script>
+  </body>
+</html>

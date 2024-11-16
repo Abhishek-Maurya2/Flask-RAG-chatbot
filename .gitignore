@@ -1,0 +1,30 @@
+# Ignore Python virtual environments
+venv/
+env/
+
+main.py
+# Ignore uploads folder
+uploads/
+
+# Ignore data folder
+data/
+
+# Ignore cache and temporary files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.swp
+*.swo
+
+# Ignore IDE specific files
+.vscode/
+.idea/
+
+# Ignore logs
+logs/
+*.log
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db

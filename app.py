@@ -14,7 +14,8 @@ import qrcode
 
 
 app = Flask(__name__)
-client = Groq(api_key="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")
+groq_api = os.getenv("GROQ_API_KEY")
+client = Groq(api_key=groq_api)
 conversations = {}
 
 embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -104,7 +105,7 @@ def get_relevant_context(query: str) -> str:
         print(f"Error getting context: {str(e)}")
         return ""
 
-def get_bot_response(user_query, file, conversation_id):
+def get_bot_response(user_query, file, conversation_id, webAccess):
     if conversation_id not in conversations:
         conversations[conversation_id] = [
             {
@@ -199,9 +200,10 @@ def chat():
         conversation_id = request.form.get("conversation_id", "default")
         message = request.form.get("message", "")
         file = request.files.get("file")
+        webAccess = request.form.get("webAccess")
 
         # Get bot response
-        response = get_bot_response(message, file, conversation_id)
+        response = get_bot_response(message, file, conversation_id, webAccess)
         return jsonify({"response": response})
 
     except Exception as e:

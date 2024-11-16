@@ -78,8 +78,7 @@
         <!-- chat -->
         <div class="w-full h-full overflow-y-auto mt-4">
           <div id="chat-messages" class="flex flex-col gap-4 p-2">
-            <div class="flex flex-row w-full items-start justify-start">
-            </div>
+            <div class="flex flex-row w-full items-start justify-start"></div>
           </div>
         </div>
         <!-- dock -->
@@ -109,6 +108,17 @@
                   attach_file
                 </span>
               </label>
+              <button
+                id="web-toggle"
+                onclick="WebToggle()"
+                class="hover:bg-[#ffffff11] p-2 rounded-full cursor-pointer"
+              >
+                <span
+                  class="material-symbols-outlined flex items-center justify-center p-0 m-0"
+                >
+                  globe
+                </span>
+              </button>
               <input
                 type="text"
                 id="user-input"
@@ -182,7 +192,17 @@
       }
 
       var conversationId = Date.now().toString();
-
+      var webAcess = false;
+      function WebToggle() {
+        webAcess = !webAcess;
+        if (webAcess) {
+          document.getElementById("web-toggle").classList.add("text-green-500");
+        } else {
+          document
+            .getElementById("web-toggle")
+            .classList.remove("text-green-500");
+        }
+      }
       document.getElementById("file-input").addEventListener("change", (e) => {
         const file = e.target.files[0];
         const attachFile = document.getElementById("attach-file");
@@ -206,6 +226,7 @@
         const formData = new FormData();
         formData.append("conversation_id", conversationId);
         formData.append("message", message);
+        formData.append("webAccess", webAcess);
         if (file) {
           formData.append("file", file);
         }
@@ -275,8 +296,7 @@
                 </div>
               </div>
           `;
-          }
-          else 
+          } else
             messageDiv.innerHTML = `
               <div class="flex flex-row w-full items-start justify-start">
                 <div class="h-5 w-5 rounded-full bg-green-500 me-2"></div>
@@ -285,7 +305,6 @@
                 </div>
               </div>
           `;
-          
         }
 
         messageDiv.className = "flex flex-col gap-4 p-2";
@@ -353,8 +372,7 @@
               displayMessage(msg.content, "user");
             } else if (msg.role === "assistant" && msg.content != null) {
               displayMessage(msg.content, "bot");
-            }
-            else if(msg.role === "tool") {
+            } else if (msg.role === "tool") {
               displayMessage(msg.content, "bot");
             }
           });

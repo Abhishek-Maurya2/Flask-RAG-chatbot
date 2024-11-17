@@ -13,8 +13,12 @@ import io
 import json
 import qrcode
 from googlesearch import search
+import requests
+from bs4 import BeautifulSoup
+from typing import List, Dict
+from dotenv import load_dotenv
 
-
+load_dotenv()
 app = Flask(__name__)
 groq_api = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=groq_api)
@@ -40,10 +44,44 @@ def generate_qr_code(data: str) -> str:
     img.save(buffered, format="PNG")
     return base64.b64encode(buffered.getvalue()).decode()
 
-def web_search(query)->str:
-    res = search(query)
-    # Return first 5 search results
-    return "\n".join(res[:5])
+def scrape_bing_search(query: str, num_results: int = 10) -> List[Dict]:
+    results = []
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64) AppleWebKit/537.36"
+    }
+    
+    page = 1
+    while len(results) < num_results:
+        url = f"https://www.bing.com/search?q={query}&first={page}"
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.text, "html.parser")
+        
+        search_results = soup.find_all("li", class_="b_algo")
+        if not search_results:
+            break
+            
+        for result in search_results:
+            if len(results) >= num_results:
+                break
+                
+            title_elem = result.find("h2")
+            if title_elem and title_elem.find("a"):
+                title = title_elem.get_text()
+                link = title_elem.find("a")["href"]
+                results.append({"title": title, "url": link})
+        
+        page += 10
+
+    return results[:num_results]
+
+def web_search(query: str) -> str:
+    """Perform a web search and return top 3 links"""
+    results = scrape_bing_search(query, 3)
+    output = ""
+    for result in results:
+        output += f"Title: {result['title']}\n"
+        output += f"URL: {result['url']}\n\n"
+    return output
 
 def initialize_knowledge_base(file):
     global vector_store
@@ -111,7 +149,7 @@ def get_relevant_context(query: str) -> str:
         print(f"Error getting context: {str(e)}")
         return ""
 
-def get_bot_response(user_query, conversation_id, webAccess):
+def get_bot_response(user_query, conversation_id, web_access):
     if conversation_id not in conversations:
         conversations[conversation_id] = [
             {
@@ -137,17 +175,33 @@ def get_bot_response(user_query, conversation_id, webAccess):
                     "required": ["data"]
                 }
             }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "web_search",
+                "description": "Perform a web search and return top 3 links",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The search query"
+                        }
+                    },
+                    "required": ["query"]
+                }
+            }
         }
     ]
+    # Add user message to history
+    context = get_relevant_context(user_query)
+    if context:
+        conversations[conversation_id].append({"role": "user", "content": f"Context: {context}\n\nQuestion: {user_query}"})
+    else:
+        conversations[conversation_id].append({"role": "user", "content": f"{user_query}"})
 
     try:
-        # Add user message to history
-        context = get_relevant_context(user_query)
-        if context:
-            conversations[conversation_id].append({"role": "user", "content": f"Context: {context}\n\nQuestion: {user_query}"})
-        else:
-            conversations[conversation_id].append({"role": "user", "content": f"{user_query}"})
-
         # Get response from bot
         response = client.chat.completions.create(
             messages=conversations[conversation_id],
@@ -158,7 +212,6 @@ def get_bot_response(user_query, conversation_id, webAccess):
 
         # Add bot response to history
         response_message = response.choices[0].message
-        # print(response_message)
         tool_calls = response_message.tool_calls
 
         if tool_calls:
@@ -174,13 +227,26 @@ def get_bot_response(user_query, conversation_id, webAccess):
                         "name": "generate_qr_code",
                         "content": f"data:image/png;base64,{qr_base64}"
                     })
+                
+                elif tool_call.function.name == "web_search":
+                    function_args = json.loads(tool_call.function.arguments)
+                    web_results = web_search(function_args["query"])
+                    
+                    # Add tool response
+                    conversations[conversation_id].append({
+                        "tool_call_id": tool_call.id,
+                        "role": "tool",
+                        "name": "web_search",
+                        "content": web_results
+                    })
+                    print("query: ", function_args["query"], " Web Results: ", web_results)
 
             # Get final response
             second_response = client.chat.completions.create(
                 messages=conversations[conversation_id],
                 model="llama3-groq-70b-8192-tool-use-preview"
             )
-            # print(second_response)
+            
             bot_message = second_response.choices[0].message.content
         else:
             bot_message = response_message.content
@@ -201,7 +267,11 @@ def chat():
     try:
         conversation_id = request.form.get("conversation_id", "default")
         message = request.form.get("message", "")
-        webAccess = request.form.get("webAccess", False)
+        webAccess = request.form.get("provide-web-Access")
+        if(webAccess == "true"):
+            webAccess = True
+        else:
+            webAccess = False
         # Get bot response
         response = get_bot_response(message, conversation_id, webAccess)
         return jsonify({"response": response})

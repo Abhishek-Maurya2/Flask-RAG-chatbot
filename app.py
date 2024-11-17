@@ -12,7 +12,7 @@ import base64
 import io
 import json
 import qrcode
-from googlesearch import search
+from urllib.parse import quote_plus
 import requests
 from bs4 import BeautifulSoup
 from typing import List, Dict
@@ -51,8 +51,18 @@ def scrape_bing_search(query: str, num_results: int = 10) -> List[Dict]:
     }
     
     page = 1
+    encoded_query = quote_plus(query)
     while len(results) < num_results:
-        url = f"https://www.bing.com/search?q={query}&first={page}"
+        url = (
+                f"https://www.bing.com/search"
+                f"?q={encoded_query}"
+                f"&first={page}"
+                f"&safesearch=off"
+                f"&form=QBLH"
+                f"&sp=-1"
+                f"&pq={encoded_query}"
+            )
+        print("\n\n", url, "\n\n")
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.text, "html.parser")
         
@@ -65,10 +75,12 @@ def scrape_bing_search(query: str, num_results: int = 10) -> List[Dict]:
                 break
                 
             title_elem = result.find("h2")
+            desc_elem = result.find("div", class_="b_caption")
             if title_elem and title_elem.find("a"):
                 title = title_elem.get_text()
                 link = title_elem.find("a")["href"]
-                results.append({"title": title, "url": link})
+                description = desc_elem.get_text().strip() if desc_elem else ""
+                results.append({"title": title, "url": link, "description": description})
         
         page += 10
 
@@ -81,6 +93,7 @@ def web_search(query: str) -> str:
     for result in results:
         output += f"Title: {result['title']}\n"
         output += f"URL: {result['url']}\n\n"
+        output += f"Description: {result['description']}\n\n"
     return output
 
 def initialize_knowledge_base(file):
@@ -197,7 +210,7 @@ def get_bot_response(user_query, conversation_id, web_access):
     # Add user message to history
     context = get_relevant_context(user_query)
     if context:
-        conversations[conversation_id].append({"role": "user", "content": f"Context: {context}\n\nQuestion: {user_query}"})
+        conversations[conversation_id].append({"role": "user", "content": f"{user_query}\n\nContext: {context}"})
     else:
         conversations[conversation_id].append({"role": "user", "content": f"{user_query}"})
 
@@ -215,6 +228,7 @@ def get_bot_response(user_query, conversation_id, web_access):
         tool_calls = response_message.tool_calls
 
         if tool_calls:
+            qr_base64 = None
             for tool_call in tool_calls:
                 if tool_call.function.name == "generate_qr_code":
                     function_args = json.loads(tool_call.function.arguments)
@@ -239,7 +253,7 @@ def get_bot_response(user_query, conversation_id, web_access):
                         "name": "web_search",
                         "content": web_results
                     })
-                    print("query: ", function_args["query"], " Web Results: ", web_results)
+                    print("query: ", function_args["query"], "\nWeb Results: ", web_results)
 
             # Get final response
             second_response = client.chat.completions.create(
@@ -248,6 +262,8 @@ def get_bot_response(user_query, conversation_id, web_access):
             )
             
             bot_message = second_response.choices[0].message.content
+            if(qr_base64):
+                bot_message += f"\n\n<img src='data:image/png;base64,{qr_base64}' alt='QR Code' class='rounded h-[300px] w-[300px] rouned-2xl mt-3 '/>"
         else:
             bot_message = response_message.content
 

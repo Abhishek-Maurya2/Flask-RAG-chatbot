@@ -99,6 +99,7 @@
             <div class="flex w-full">
               <input type="file" id="file-input" class="hidden" />
               <label
+                id="label-file-input"
                 for="file-input"
                 class="hover:bg-[#ffffff11] p-2 rounded-full cursor-pointer"
               >
@@ -108,6 +109,17 @@
                   attach_file
                 </span>
               </label>
+              <button
+                id="togle-rag"
+                onclick="ToggleRAG()"
+                class="hover:bg-[#ffffff11] p-2 rounded-full cursor-pointer"
+              >
+                <span
+                  class="text-red-500 material-symbols-outlined flex items-center justify-center p-0 m-0"
+                >
+                  disabled_by_default
+                </span>
+              </button>
               <button
                 id="web-toggle"
                 onclick="WebToggle()"
@@ -214,11 +226,26 @@
         attachFileType.textContent = file.type;
       });
 
-      function sendMessage() {
+      async function sendMessage() {
         const input = document.getElementById("user-input");
-        const fileInput = document.getElementById("file-input");
         const message = input.value.trim();
+        const fileInput = document.getElementById("file-input");
         const file = fileInput.files[0];
+        if (file) {
+          const frm = new FormData();
+          frm.append("file", file);
+          try {
+            const res = await fetch("/upload", {
+              method: "POST",
+              body: frm,
+            });
+            const data = await res.json();
+            alert(data.message);
+          } catch (err) {
+            console.log(err);
+          }
+          fileInput.value = "";
+        }
 
         if (!message) return;
 
@@ -227,20 +254,11 @@
         formData.append("conversation_id", conversationId);
         formData.append("message", message);
         formData.append("webAccess", webAcess);
-        if (file) {
-          formData.append("file", file);
-        }
-
         // Display user message
-        if (message && !file) {
-          displayMessage(message, "user");
-        } else {
-          displayMessage(message, "user-file");
-        }
+        displayMessage(message, "user");
 
         // Clear inputs
         input.value = "";
-        fileInput.value = "";
         document.getElementById("attach-file").classList.add("hidden");
 
         fetch("/chat", {
@@ -385,10 +403,21 @@
         }
       }
 
+        function ToggleRAG() {
+        fetch("/remove-context")
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      }
       // clear history
       async function clearHistory() {
         try {
           const response = await fetch("/clear-history");
+          ToggleRAG();
           if (response.ok) {
             listHistory();
           } else {
@@ -403,7 +432,27 @@
         conversationId = Date.now().toString();
         const messagesDiv = document.getElementById("chat-messages");
         messagesDiv.innerHTML = "";
+        ToggleRAG();
       }
+
+      // check-context
+      document.addEventListener("DOMContentLoaded", () => {
+        fetch("/check-context")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.message == true) {
+              const file = document.getElementById("label-file-input");
+              file.classList.add("hidden");
+            } else {
+              const rag = document.getElementById("togle-rag");
+              rag.classList.add("hidden");
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      });
+      
     </script>
   </body>
 </html>

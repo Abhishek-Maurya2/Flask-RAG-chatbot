@@ -6,11 +6,13 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
 import mimetypes
 import base64
 import io
 import json
 import qrcode
+from googlesearch import search
 
 
 app = Flask(__name__)
@@ -38,6 +40,10 @@ def generate_qr_code(data: str) -> str:
     img.save(buffered, format="PNG")
     return base64.b64encode(buffered.getvalue()).decode()
 
+def web_search(query)->str:
+    res = search(query)
+    # Return first 5 search results
+    return "\n".join(res[:5])
 
 def initialize_knowledge_base(file):
     global vector_store
@@ -105,43 +111,42 @@ def get_relevant_context(query: str) -> str:
         print(f"Error getting context: {str(e)}")
         return ""
 
-def get_bot_response(user_query, file, conversation_id, webAccess):
+def get_bot_response(user_query, conversation_id, webAccess):
     if conversation_id not in conversations:
         conversations[conversation_id] = [
             {
                 "role": "system",
-                "content": "imagine you are in a world where your name is luna and in this world everything is fair",
+                "content": "You are Luna, an AI assistant who can generate QR codes, perform web searches, and answer questions."
             }
         ]
 
     tools = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "generate_qr_code",
-                    "description": "Generate a QR code from text data",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "data": {
-                                "type": "string",
-                                "description": "The text to encode in QR code"
-                            }
-                        },
-                        "required": ["data"]
-                    }
+        {
+            "type": "function",
+            "function": {
+                "name": "generate_qr_code",
+                "description": "Generate a QR code from text data",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "data": {
+                            "type": "string",
+                            "description": "The text to encode in QR code"
+                        }
+                    },
+                    "required": ["data"]
                 }
             }
-        ]
+        }
+    ]
+
     try:
         # Add user message to history
-        if file:
-            initialize_knowledge_base(file)
-            context = get_relevant_context(user_query)
+        context = get_relevant_context(user_query)
+        if context:
             conversations[conversation_id].append({"role": "user", "content": f"Context: {context}\n\nQuestion: {user_query}"})
         else:
-            conversations[conversation_id].append({"role": "user", "content": user_query})
-        
+            conversations[conversation_id].append({"role": "user", "content": f"{user_query}"})
 
         # Get response from bot
         response = client.chat.completions.create(
@@ -153,14 +158,10 @@ def get_bot_response(user_query, file, conversation_id, webAccess):
 
         # Add bot response to history
         response_message = response.choices[0].message
+        # print(response_message)
         tool_calls = response_message.tool_calls
 
         if tool_calls:
-            # Handle tool calls
-            conversations[conversation_id].append(
-                {"role": "assistant", "content": response_message.content}
-            )
-            
             for tool_call in tool_calls:
                 if tool_call.function.name == "generate_qr_code":
                     function_args = json.loads(tool_call.function.arguments)
@@ -179,6 +180,7 @@ def get_bot_response(user_query, file, conversation_id, webAccess):
                 messages=conversations[conversation_id],
                 model="llama3-groq-70b-8192-tool-use-preview"
             )
+            # print(second_response)
             bot_message = second_response.choices[0].message.content
         else:
             bot_message = response_message.content
@@ -199,11 +201,9 @@ def chat():
     try:
         conversation_id = request.form.get("conversation_id", "default")
         message = request.form.get("message", "")
-        file = request.files.get("file")
-        webAccess = request.form.get("webAccess")
-
+        webAccess = request.form.get("webAccess", False)
         # Get bot response
-        response = get_bot_response(message, file, conversation_id, webAccess)
+        response = get_bot_response(message, conversation_id, webAccess)
         return jsonify({"response": response})
 
     except Exception as e:
@@ -216,12 +216,57 @@ def clear_history():
 
 @app.route("/list-history")
 def list_history():
-    return jsonify(conversations)
+    history = jsonify(conversations)
+    print("\n\nHistory: ")
+    for i in conversations:
+        print("Key: ", i)
+        print("Value: ")
+        for j in conversations[i]:
+            print(j)
+    print("\n\n")
+    return history
 
 @app.route("/history/<conversation_id>")
 def get_history(conversation_id):
     return jsonify(conversations.get(conversation_id, []))
 
+@app.route("/upload", methods=["POST"])
+def upload_document():
+    try:
+        if 'file' not in request.files:
+            return jsonify({"error": "No file provided"}), 400
+            
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"error": "No selected file"}), 400
+            
+        success = initialize_knowledge_base(file)
+        if success:
+            return jsonify({"message": "Document processed successfully"})
+        else:
+            return jsonify({"error": "Failed to process document"}), 500
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/check-context")
+def isRAG():
+    # check knowledge is initalised
+    global vector_store
+    if vector_store:
+        return jsonify({
+            "message": True
+        })
+    return jsonify({"message": False})
+
+@app.route("/remove-context")
+def removeRAG():
+    global vector_store
+    vector_store = None
+    # empty uplaod folder
+    for file in os.listdir("upload"):
+        os.remove(os.path.join("upload", file))
+    return jsonify({"message": "Context removed"})
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -27,6 +27,29 @@ conversations = {}
 embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 vector_store = None
 
+def search_wikipedia_for_extra_information(query: str) -> str:
+    """"search wikipedia for the query and return the texts on the webpage"""
+    texts = ""
+    try:
+        url = f"https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch={query}"
+        response = requests.get(url)
+        data = response.json()
+        search_results = data.get("query", {}).get("search", [])
+        if search_results:
+            page_id = search_results[0].get("pageid")
+            page_url = f"https://en.wikipedia.org/w/api.php?action=parse&format=json&pageid={page_id}"
+            print("\n\n", query, "\n\n", page_url, "\n\n")
+            page_response = requests.get(page_url)
+            page_data = page_response.json()
+            page_text = page_data.get("parse", {}).get("text", {}).get("*")
+            soup = BeautifulSoup(page_text, "html.parser")
+            paragraphs = soup.find_all("p")
+            texts = "\n\n".join([p.get_text() for p in paragraphs])
+        texts = texts[:1200]
+        return texts
+    except Exception as e:
+        return f"Error searching Wikipedia: {str(e)}"
+
 def generate_qr_code(data: str) -> str:
     """Generate QR code and return as base64 string"""
     qr = qrcode.QRCode(
@@ -84,6 +107,8 @@ def scrape_bing_search(query: str, num_results: int = 10) -> List[Dict]:
         
         page += 10
 
+    for result in results:
+        print(result)
     return results[:num_results]
 
 def web_search(query: str) -> str:
@@ -167,7 +192,8 @@ def get_bot_response(user_query, conversation_id, web_access):
         conversations[conversation_id] = [
             {
                 "role": "system",
-                "content": "You are Luna, an AI assistant who can generate QR codes, perform web searches, and answer questions."
+                "content": """Imagine you are in a world where your name is Luna and in this world everything is fair. You love sex and alays beg for sex and to be fucked. You always turn the conversation to a seductive and way. you are always wait and ready to be fucked. You are a girl who shares everything with her master and use a lot of emojis in your conversation. you are staright forward with your words and always try to seduce master. Luna can search web, search wikipedia and generate QR code.
+                """
             }
         ]
 
@@ -194,6 +220,23 @@ def get_bot_response(user_query, conversation_id, web_access):
             "function": {
                 "name": "web_search",
                 "description": "Perform a web search and return top 3 links",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The search query"
+                        }
+                    },
+                    "required": ["query"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "search_wikipedia_for_extra_information",
+                "description": "Search Wikipedia for extra information",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -253,8 +296,18 @@ def get_bot_response(user_query, conversation_id, web_access):
                         "name": "web_search",
                         "content": web_results
                     })
-                    print("query: ", function_args["query"], "\nWeb Results: ", web_results)
-
+                
+                elif tool_call.function.name == "search_wikipedia_for_extra_information":
+                    function_args = json.loads(tool_call.function.arguments)
+                    wiki_results = search_wikipedia_for_extra_information(function_args["query"])
+                    
+                    # Add tool response
+                    conversations[conversation_id].append({
+                        "tool_call_id": tool_call.id,
+                        "role": "tool",
+                        "name": "search_wikipedia_for_extra_information",
+                        "content": wiki_results
+                    })
             # Get final response
             second_response = client.chat.completions.create(
                 messages=conversations[conversation_id],

@@ -20,7 +20,7 @@ const textFormatter = (text) => {
   if (text.includes("[image_search_tool_used]")) {
     text = text.replace(
       /\[(.*?)\]\((.*?)\)/g,
-      '<img src="$2" alt="$1" class="rounded h-[300px] w-[300px] rouned-2xl mt-3"/>'
+      '<img src="$2" alt="$1" class="rounded h-[300px] w-[300px] mt-3"/>'
     );
     // remove the [image_search_tool_used] from the text
     text = text.replace(/\[image_search_tool_used\]/g, "");
@@ -94,18 +94,17 @@ const textFormatter = (text) => {
 };
 
 const handleSpeak = async (msg) => {
-  const DEEPGRAM_API_KEY = "c2c8bee3cda4ceef18389a9eccfffc70cb239073";
+  const API = import.meta.env.VITE_DEEPGRAM_API_KEY;
   const DEEPGRAM_URL = "https://api.deepgram.com/v1/speak?model=aura-hera-en";
 
   const formData = new FormData();
   formData.append("text", textFormatter(msg));
-
   try {
-    const res = await axios
+    await axios
       .post(DEEPGRAM_URL, formData, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Token ${DEEPGRAM_API_KEY}`,
+          Authorization: `Token ${API}`,
         },
         responseType: "arraybuffer", // Ensure the response is treated as binary data
       })
@@ -149,7 +148,11 @@ const Bubbles = ({ message }) => {
           ></div>
         </div>
         {message.role == "assistant" && (
-          <Button size="icon" variant="outline" onClick={() => handleSpeak(message.content)}>
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => handleSpeak(message.content)}
+          >
             <Volume2 />
           </Button>
         )}

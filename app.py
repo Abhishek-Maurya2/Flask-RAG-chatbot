@@ -37,8 +37,8 @@ def image_search(query):
     """Search for images using the given query and return top 5 images url"""
     url = "https://www.googleapis.com/customsearch/v1"
     params = {
-        "key":"AIzaSyDmCMBJQGTtpqNU7kcdeZAj9hHgoqbqVCY",
-        "cx": "339c6b3d799b14c98",
+        "key": os.getenv("GOOGLE_SEARCH_API_KEY"),
+        "cx": os.getenv("GOOGLE_SEARCH_ENGINE_ID"),
         "q": query,
         "searchType": "image",
         "num": 5,
@@ -101,8 +101,8 @@ def web_search(query: str) -> str:
     """Perform a web search and return top 3 links"""
     url = "https://www.googleapis.com/customsearch/v1"
     params = {
-        "key":"AIzaSyDmCMBJQGTtpqNU7kcdeZAj9hHgoqbqVCY",
-        "cx": "339c6b3d799b14c98",
+        "key": os.getenv("GOOGLE_SEARCH_API_KEY"),
+        "cx": os.getenv("GOOGLE_SEARCH_ENGINE_ID"),
         "q": query,
         
     }

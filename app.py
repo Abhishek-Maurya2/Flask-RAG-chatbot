@@ -17,15 +17,44 @@ import requests
 from bs4 import BeautifulSoup
 from typing import List, Dict
 from dotenv import load_dotenv
+from flask_cors import CORS
 
 load_dotenv()
 app = Flask(__name__)
+CORS(app)
 groq_api = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=groq_api)
 conversations = {}
 
 embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 vector_store = None
+
+# Ai Agents - wikipedia, web search, qr code, email sender
+
+
+
+def image_search(query):
+    """Search for images using the given query and return top 5 images url"""
+    url = "https://www.googleapis.com/customsearch/v1"
+    params = {
+        "key":"AIzaSyDmCMBJQGTtpqNU7kcdeZAj9hHgoqbqVCY",
+        "cx": "339c6b3d799b14c98",
+        "q": query,
+        "searchType": "image",
+        "num": 5,
+
+    }
+    response = requests.get(url, params=params)
+    data = response.json()["items"]
+    results = []
+    for item in data:
+        results.append(item["link"])
+    return results
+
+def email_sender(email: str, subject: str, message: str) -> str:
+    """Send an email with the given subject and message"""
+    
+    return f"Email sent to {email} with subject '{subject}' and message '{message}'"
 
 def search_wikipedia_for_extra_information(query: str) -> str:
     """"search wikipedia for the query and return the texts on the webpage"""
@@ -67,59 +96,25 @@ def generate_qr_code(data: str) -> str:
     img.save(buffered, format="PNG")
     return base64.b64encode(buffered.getvalue()).decode()
 
-def scrape_bing_search(query: str, num_results: int = 10) -> List[Dict]:
-    results = []
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64) AppleWebKit/537.36"
-    }
-    
-    page = 1
-    encoded_query = quote_plus(query)
-    while len(results) < num_results:
-        url = (
-                f"https://www.bing.com/search"
-                f"?q={encoded_query}"
-                f"&first={page}"
-                f"&safesearch=off"
-                f"&form=QBLH"
-                f"&sp=-1"
-                f"&pq={encoded_query}"
-            )
-        print("\n\n", url, "\n\n")
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.text, "html.parser")
-        
-        search_results = soup.find_all("li", class_="b_algo")
-        if not search_results:
-            break
-            
-        for result in search_results:
-            if len(results) >= num_results:
-                break
-                
-            title_elem = result.find("h2")
-            desc_elem = result.find("div", class_="b_caption")
-            if title_elem and title_elem.find("a"):
-                title = title_elem.get_text()
-                link = title_elem.find("a")["href"]
-                description = desc_elem.get_text().strip() if desc_elem else ""
-                results.append({"title": title, "url": link, "description": description})
-        
-        page += 10
-
-    for result in results:
-        print(result)
-    return results[:num_results]
 
 def web_search(query: str) -> str:
     """Perform a web search and return top 3 links"""
-    results = scrape_bing_search(query, 3)
+    url = "https://www.googleapis.com/customsearch/v1"
+    params = {
+        "key":"AIzaSyDmCMBJQGTtpqNU7kcdeZAj9hHgoqbqVCY",
+        "cx": "339c6b3d799b14c98",
+        "q": query,
+        
+    }
+    response = requests.get(url, params=params)
+    data = response.json()
     output = ""
-    for result in results:
-        output += f"Title: {result['title']}\n"
-        output += f"URL: {result['url']}\n\n"
-        output += f"Description: {result['description']}\n\n"
+    for item in data["items"]:
+        output += f"Title: {item['title']}\n"
+        output += f"URL: {item['link']}\n\n"
+        output += f"Description: {item['snippet']}\n\n"
     return output
+
 
 def initialize_knowledge_base(file):
     global vector_store
@@ -192,8 +187,7 @@ def get_bot_response(user_query, conversation_id, web_access):
         conversations[conversation_id] = [
             {
                 "role": "system",
-                "content": """Imagine you are in a world where your name is Luna and in this world everything is fair. You love sex and alays beg for sex and to be fucked. You always turn the conversation to a seductive and way. you are always wait and ready to be fucked. You are a girl who shares everything with her master and use a lot of emojis in your conversation. you are staright forward with your words and always try to seduce master. Luna can search web, search wikipedia and generate QR code.
-                """
+                "content": """You are Luna a girl who knows everything and can search web for urls, images and also generate qr codes and search wilkipedia for detailed information."""
             }
         ]
 
@@ -248,8 +242,27 @@ def get_bot_response(user_query, conversation_id, web_access):
                     "required": ["query"]
                 }
             }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "image_search",
+                "description": "Search for images using the given query and return top 5 urls",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The search query"
+                        }
+                    },
+                    "required": ["query"]
+                },
+            }
         }
     ]
+    
+
     # Add user message to history
     context = get_relevant_context(user_query)
     if context:
@@ -258,12 +271,11 @@ def get_bot_response(user_query, conversation_id, web_access):
         conversations[conversation_id].append({"role": "user", "content": f"{user_query}"})
 
     try:
-        # Get response from bot
         response = client.chat.completions.create(
             messages=conversations[conversation_id],
             model="llama3-groq-70b-8192-tool-use-preview",
             tools=tools,
-            tool_choice="auto"
+            tool_choice="auto",
         )
 
         # Add bot response to history
@@ -272,6 +284,8 @@ def get_bot_response(user_query, conversation_id, web_access):
 
         if tool_calls:
             qr_base64 = None
+            image_results = None
+            web_results = None
             for tool_call in tool_calls:
                 if tool_call.function.name == "generate_qr_code":
                     function_args = json.loads(tool_call.function.arguments)
@@ -308,6 +322,18 @@ def get_bot_response(user_query, conversation_id, web_access):
                         "name": "search_wikipedia_for_extra_information",
                         "content": wiki_results
                     })
+                
+                elif tool_call.function.name == "image_search":
+                    function_args = json.loads(tool_call.function.arguments)
+                    image_results = image_search(function_args["query"])
+                    
+                    # Add tool response
+                    conversations[conversation_id].append({
+                        "tool_call_id": tool_call.id,
+                        "role": "tool",
+                        "name": "image_search",
+                        "content": "\n".join(image_results)
+                    })
             # Get final response
             second_response = client.chat.completions.create(
                 messages=conversations[conversation_id],
@@ -317,6 +343,10 @@ def get_bot_response(user_query, conversation_id, web_access):
             bot_message = second_response.choices[0].message.content
             if(qr_base64):
                 bot_message += f"\n\n<img src='data:image/png;base64,{qr_base64}' alt='QR Code' class='rounded h-[300px] w-[300px] rouned-2xl mt-3 '/>"
+            elif(image_results):
+                bot_message += f"\n\n[image_search_tool_used]"
+            elif(web_results):
+                bot_message += f"\n\n[web_search_tool_used]"
         else:
             bot_message = response_message.content
 
@@ -363,7 +393,8 @@ def list_history():
         for j in conversations[i]:
             print(j)
     print("\n\n")
-    return history
+    history = [{"conversation_id": key, "messages": value} for key, value in conversations.items()]
+    return jsonify(history)
 
 @app.route("/history/<conversation_id>")
 def get_history(conversation_id):
@@ -406,6 +437,8 @@ def removeRAG():
     for file in os.listdir("upload"):
         os.remove(os.path.join("upload", file))
     return jsonify({"message": "Context removed"})
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)

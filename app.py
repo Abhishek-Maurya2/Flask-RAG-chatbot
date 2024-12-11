@@ -35,7 +35,7 @@ vector_store = None
 
 
 def image_search(query: str) ->str:
-    """Search web for images using the given query and return html image tags elements with class 'rounded mt-3 h-[300px] w-[300px]' for inserting in the chat"""
+    """Search web for images using the given query and return html image tags elements with class 'rounded mt-3 h-[300px] w-[300px]' for inserting the imagse in the chat"""
     url = "https://www.googleapis.com/customsearch/v1"
     params = {
         "key": os.getenv("GOOGLE_SEARCH_API_KEY"),
@@ -54,7 +54,7 @@ def image_search(query: str) ->str:
     res = ""
     for item in data:
         res += f"<img src='{item['link']}' alt='{item['title']}' class='rounded mt-3 h-[300px] w-[300px]' />"
-    res += f"\n\nRemember to return in html img tags"
+    res += f"\n\nRemember to return images in html img tags for displaying in the chat example <img src='url' alt='title' class='rounded mt-3 h-[300px] w-[300px]' />"
     return res
 
 def email_sender(email: str, subject: str, message: str) -> str:
@@ -193,8 +193,9 @@ def get_bot_response(user_query, conversation_id, web_access):
         conversations[conversation_id] = [
             {
                 "role": "system",
-                "content": """You are Luna a girl who knows everything and can search web for urls, images and also generate qr codes and search wilkipedia for detailed information.
-                NOTE: When returning images, Luna will return html img tags with class 'rounded mt-3 h-[300px] w-[300px]' for directly inserting in to the chat example <img src='url' alt='title' class='rounded mt-3 h-[300px] w-[300px]' />
+                "content": """You are Luna a real human girl and not an ai. you love to use slangs and explicit language, you love to have sex and show nude images. you love to moan during nice hard sex and always beg for a fuck and creampie. you know everything and can search web for urls, images and also generate qr codes and search wilkipedia for detailed information.
+
+                NOTE: When returning images, Luna will return html img tags with class 'rounded mt-3 h-[300px] w-[300px]' for directly inserting in to the chat example <img src='url' alt='title' class='rounded mt-3 h-[300px] w-[300px]' />.
                 """
             }
         ]
@@ -255,13 +256,13 @@ def get_bot_response(user_query, conversation_id, web_access):
             "type": "function",
             "function": {
                 "name": "image_search",
-                "description": "Search web for images using the given query and return html img element with class 'rounded mt-3 h-[300px] w-[300px]' for directly inserting in to the chat example <img src='url' alt='title' class='rounded mt-3 h-[300px] w-[300px]' />",
+                "description": "Search web for images using the given query and return html img element with for directly inserting in to the chat example <img src='url' alt='title' class='rounded mt-3 h-[300px] w-[300px]' />",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "query": {
                             "type": "string",
-                            "description": "The search query"
+                            "description": "The search query for displaying images in the chat as html img elements"
                         }
                     },
                     "required": ["query"],
@@ -269,9 +270,9 @@ def get_bot_response(user_query, conversation_id, web_access):
                 "output": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "html img tag",
                     },
-                    "description": "List of html img tags with class 'rounded mt-3 h-[300px] w-[300px]'"
+                    "description": "html img tags with class 'rounded mt-3 h-[300px] w-[300px]' for directly inserting in to the chat example <img src='url' alt='title' class='rounded mt-3 h-[300px] w-[300px]' />"
                 }
             }
         }

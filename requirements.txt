@@ -3,6 +3,7 @@ groq
 werkzeug
 langchain_community
 langchain
+langchain_huggingface
 requests
 beautifulsoup4
 python-dotenv

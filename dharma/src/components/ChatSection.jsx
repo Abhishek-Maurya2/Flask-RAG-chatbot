@@ -191,7 +191,7 @@ function ChatSection() {
 
     try {
       const response = await axios
-        .post("http://localhost:5000/chat", formData)
+        .post(`${VITE_URL}/chat`, formData)
         .then((res) => {
           addMessage({ role: "assistant", content: res.data.response });
           console.log(res.data);

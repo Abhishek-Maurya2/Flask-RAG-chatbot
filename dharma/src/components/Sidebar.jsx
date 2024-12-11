@@ -15,7 +15,7 @@ function Sidebar() {
   const [loading, setLoading] = useState(true);
   const getHistory = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/list-history");
+      const response = await axios.get(`${VITE_URL}/list-history`);
       setHistory(response.data);
       // console.log(response.data);
     } catch (error) {
@@ -34,7 +34,7 @@ function Sidebar() {
   const ClearHistory = async () => {
     try {
       const response = await axios
-        .get("http://localhost:5000/clear-history")
+        .get(`${VITE_URL}/clear-history`)
         .then(() => {
           setHistory([]);
         });

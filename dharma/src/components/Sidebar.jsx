@@ -15,7 +15,9 @@ function Sidebar() {
   const [loading, setLoading] = useState(true);
   const getHistory = async () => {
     try {
-      const response = await axios.get(`${VITE_URL}/list-history`);
+      const url = `${import.meta.env.VITE_URL}/list-history`;
+      console.log(url)
+      const response = await axios.get(url);
       setHistory(response.data);
       // console.log(response.data);
     } catch (error) {

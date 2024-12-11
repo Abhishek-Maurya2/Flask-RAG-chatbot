@@ -53,7 +53,7 @@ function Sidebar() {
     <div
       className={`${
         isSideBarOpen ? "flex" : "hidden"
-      } flex-col border-r w-[280px] h-full p-4 rounded-e-2xl gap-2 overflow-hidden`}
+      } flex-col border-r min-w-[100vw] sm:min-w-[250px] p-4 rounded-e-2xl gap-2 overflow-hidden`}
     >
       <div className="flex flex-row items-center justify-between mb-4">
         <p className="text-xl font-semibold">Dharma Ai</p>

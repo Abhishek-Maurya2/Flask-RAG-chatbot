@@ -33,6 +33,7 @@ vector_store = None
 
 
 
+
 def image_search(query):
     """Search for images using the given query and return top 5 images url"""
     url = "https://www.googleapis.com/customsearch/v1"
@@ -387,13 +388,13 @@ def clear_history():
 @app.route("/list-history")
 def list_history():
     history = jsonify(conversations)
-    print("\n\nHistory: ")
-    for i in conversations:
-        print("Key: ", i)
-        print("Value: ")
-        for j in conversations[i]:
-            print(j)
-    print("\n\n")
+    # print("\n\nHistory: ")
+    # for i in conversations:
+    #     print("Key: ", i)
+    #     print("Value: ")
+    #     for j in conversations[i]:
+    #         print(j)
+    # print("\n\n")
     history = [{"conversation_id": key, "messages": value} for key, value in conversations.items()]
     return jsonify(history)
 

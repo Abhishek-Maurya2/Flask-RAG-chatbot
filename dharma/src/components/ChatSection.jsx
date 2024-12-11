@@ -121,7 +121,7 @@ const handleSpeak = async (msg) => {
 const Bubbles = ({ message }) => {
   return (
     <div
-      className={`flex px-4 ${
+      className={`flex flex-row px-2 ${
         message.role === "assistant" ? "justify-start" : "justify-end"
       }`}
     >
@@ -135,23 +135,33 @@ const Bubbles = ({ message }) => {
         `}
       >
         <div className="bg-red-500 h-4 w-4 rounded-full"></div>
-        <div
-          className={`p-2 rounded-lg max-w-[250px] sm:max-w-[500px] ${
-            message.role === "assistant" ? "bg-gray-200" : "bg-blue-500"
-          } text-sm text-black`}
-        >
-          {/* {message.content} */}
+        {/* {message.content} */}
+        <div className="flex flex-col gap-1">
           <div
+            className={`p-2 rounded-lg max-w-[90vw] sm:max-w-[500px] ${
+              message.role === "assistant" ? " border" : "bg-blue-500"
+            } text-sm`}
             dangerouslySetInnerHTML={{
               __html: textFormatter(message.content),
             }}
           ></div>
+          {message.role == "assistant" && (
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => handleSpeak(message.content)}
+              className="sm:hidden"
+            >
+              <Volume2 />
+            </Button>
+          )}
         </div>
         {message.role == "assistant" && (
           <Button
             size="icon"
             variant="outline"
             onClick={() => handleSpeak(message.content)}
+            className="hidden sm:flex"
           >
             <Volume2 />
           </Button>
@@ -232,36 +242,37 @@ function ChatSection() {
   }, [toggleSideBar]);
 
   return (
-    <div className="flex flex-col w-full h-screen overflow-hidden">
+    <div className="flex justify-between flex-col w-full ">
       {/* head */}
-      <div className="flex flex-row gap-4 items-center h-[8vh] pt-3 ms-4">
-        {!isSideBarOpen && (
-          <>
-            <p className="text-xl font-semibold">Dharma Ai</p>
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={() => {
-                toggleSideBar(!isSideBarOpen);
-              }}
-            >
-              <SidebarOpen />
-            </Button>
-          </>
+
+      <div className="flex flex-row items-center justify-between px-4 py-2">
+        {!isSideBarOpen ? (
+          <button
+            className="p-0 m-0"
+            onClick={() => {
+              toggleSideBar(!isSideBarOpen);
+            }}
+          >
+            <SidebarOpen size={20} />
+          </button>
+        ) : (
+          <div></div>
         )}
+        <p className="text-xl font-semibold">Dharma Ai</p>
+        <div></div>
       </div>
+
       {/* chats */}
-      <div className="h-[80vh]">
-        <div className="flex flex-col gap-2 h-full overflow-y-auto">
-          {messages.map((message, index) => {
-            return <Bubbles key={index} message={message} />;
-          })}
-          {sending && <SkeletonDemo />}
-          <div ref={chatEndRef} />
-        </div>
+      <div className="flex flex-col gap-2 h-[90vh] overflow-y-auto">
+        {messages.map((message, index) => {
+          return <Bubbles key={index} message={message} />;
+        })}
+        {sending && <SkeletonDemo />}
+        <div ref={chatEndRef} />
       </div>
+
       {/* dock */}
-      <div className="flex flex-col gap-1 items-center justify-center h-[12vh]">
+      <div className="pt-1 flex flex-col gap-1 items-center justify-center">
         <div className="flex items-center justify-center border-2 bg-inherit text-inherit rounded-2xl overflow-hidden">
           <input
             type="text"

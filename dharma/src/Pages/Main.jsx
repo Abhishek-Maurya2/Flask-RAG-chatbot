@@ -21,7 +21,7 @@ function Main() {
   // }, []);
 
   return (
-    <div className="h-screen w-full flex flex-row">
+    <div className="h-[93vh] sm:h-[100vh] w-full flex flex-row overflow-hidden">
       <Sidebar />
       <ChatSection />
     </div>

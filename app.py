@@ -2,11 +2,11 @@ from flask import Flask, request, jsonify, render_template
 from groq import Groq
 import os
 from werkzeug.utils import secure_filename
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.document_loaders import PyPDFLoader, TextLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
+# from langchain_community.vectorstores import FAISS
+# from langchain_community.embeddings import HuggingFaceEmbeddings
+# from langchain_community.document_loaders import PyPDFLoader, TextLoader
+# from langchain.text_splitter import RecursiveCharacterTextSplitter
+# from langchain_huggingface import HuggingFaceEmbeddings
 import mimetypes
 import base64
 import io
@@ -26,7 +26,7 @@ groq_api = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=groq_api)
 conversations = {}
 
-embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+# embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 vector_store = None
 
 # Ai Agents - wikipedia, web search, qr code, email sender
@@ -116,71 +116,71 @@ def web_search(query: str) -> str:
     return output
 
 
-def initialize_knowledge_base(file):
-    global vector_store
-    try:
-        # Save uploaded file
-        filename = secure_filename(file.filename)
-        file_path = os.path.join("upload", filename)
-        print (file_path)
-        file.save(file_path)
+# def initialize_knowledge_base(file):
+#     global vector_store
+#     try:
+#         # Save uploaded file
+#         filename = secure_filename(file.filename)
+#         file_path = os.path.join("upload", filename)
+#         print (file_path)
+#         file.save(file_path)
 
-        # Detect file type and use appropriate loader
-        file_type = mimetypes.guess_type(filename)[0]
+#         # Detect file type and use appropriate loader
+#         file_type = mimetypes.guess_type(filename)[0]
         
-        if file_type == 'application/pdf':
-            loader = PyPDFLoader(file_path)
-        elif file_type == 'text/plain':
-            loader = TextLoader(file_path, encoding='utf-8')
-        else:
-            raise ValueError(f"Unsupported file type: {file_type}")
+#         if file_type == 'application/pdf':
+#             loader = PyPDFLoader(file_path)
+#         elif file_type == 'text/plain':
+#             loader = TextLoader(file_path, encoding='utf-8')
+#         else:
+#             raise ValueError(f"Unsupported file type: {file_type}")
             
-        documents = loader.load()
+#         documents = loader.load()
 
-        # Split into chunks
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200,
-            length_function=len
-        )
-        texts = text_splitter.split_documents(documents)
+#         # Split into chunks
+#         text_splitter = RecursiveCharacterTextSplitter(
+#             chunk_size=1000,
+#             chunk_overlap=200,
+#             length_function=len
+#         )
+#         texts = text_splitter.split_documents(documents)
 
-        if not texts:
-            print(f"Warning: No text chunks created from {filename}")
-            return False
+#         if not texts:
+#             print(f"Warning: No text chunks created from {filename}")
+#             return False
 
-        # Create or update vector store
-        if vector_store is None:
-            vector_store = FAISS.from_documents(texts, embeddings)
-        else:
-            vector_store.add_documents(texts)
+#         # Create or update vector store
+#         if vector_store is None:
+#             vector_store = FAISS.from_documents(texts, embeddings)
+#         else:
+#             vector_store.add_documents(texts)
 
-        print(f"Added {len(texts)} chunks to vector store from {filename}")
-        return True
+#         print(f"Added {len(texts)} chunks to vector store from {filename}")
+#         return True
 
-    except Exception as e:
-        print(f"Error initializing knowledge base: {str(e)}")
-        return False
+#     except Exception as e:
+#         print(f"Error initializing knowledge base: {str(e)}")
+#         return False
 
-def get_relevant_context(query: str) -> str:
-    try:
-        if vector_store is None:
-            return ""
+# def get_relevant_context(query: str) -> str:
+#     try:
+#         if vector_store is None:
+#             return ""
 
-        # Get relevant documents
-        relevant_docs = vector_store.similarity_search(
-            query,
-            k=3  # Number of relevant chunks to retrieve
-        )
+#         # Get relevant documents
+#         relevant_docs = vector_store.similarity_search(
+#             query,
+#             k=3  # Number of relevant chunks to retrieve
+#         )
 
-        # Combine context from relevant documents
-        context = "\n\n".join([doc.page_content for doc in relevant_docs])
+#         # Combine context from relevant documents
+#         context = "\n\n".join([doc.page_content for doc in relevant_docs])
         
-        return context
+#         return context
 
-    except Exception as e:
-        print(f"Error getting context: {str(e)}")
-        return ""
+#     except Exception as e:
+#         print(f"Error getting context: {str(e)}")
+#         return ""
 
 def get_bot_response(user_query, conversation_id, web_access):
     if conversation_id not in conversations:
@@ -264,11 +264,12 @@ def get_bot_response(user_query, conversation_id, web_access):
     
 
     # Add user message to history
-    context = get_relevant_context(user_query)
-    if context:
-        conversations[conversation_id].append({"role": "user", "content": f"{user_query}\n\nContext: {context}"})
-    else:
-        conversations[conversation_id].append({"role": "user", "content": f"{user_query}"})
+    # context = get_relevant_context(user_query)
+    # if context:
+    #     conversations[conversation_id].append({"role": "user", "content": f"{user_query}\n\nContext: {context}"})
+    # else:
+    #     conversations[conversation_id].append({"role": "user", "content": f"{user_query}"})
+    conversations[conversation_id].append({"role": "user", "content": f"{user_query}"})
 
     try:
         response = client.chat.completions.create(
@@ -400,43 +401,43 @@ def list_history():
 def get_history(conversation_id):
     return jsonify(conversations.get(conversation_id, []))
 
-@app.route("/upload", methods=["POST"])
-def upload_document():
-    try:
-        if 'file' not in request.files:
-            return jsonify({"error": "No file provided"}), 400
+# @app.route("/upload", methods=["POST"])
+# def upload_document():
+#     try:
+#         if 'file' not in request.files:
+#             return jsonify({"error": "No file provided"}), 400
             
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({"error": "No selected file"}), 400
+#         file = request.files['file']
+#         if file.filename == '':
+#             return jsonify({"error": "No selected file"}), 400
             
-        success = initialize_knowledge_base(file)
-        if success:
-            return jsonify({"message": "Document processed successfully"})
-        else:
-            return jsonify({"error": "Failed to process document"}), 500
+#         success = initialize_knowledge_base(file)
+#         if success:
+#             return jsonify({"message": "Document processed successfully"})
+#         else:
+#             return jsonify({"error": "Failed to process document"}), 500
             
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
 
-@app.route("/check-context")
-def isRAG():
-    # check knowledge is initalised
-    global vector_store
-    if vector_store:
-        return jsonify({
-            "message": True
-        })
-    return jsonify({"message": False})
+# @app.route("/check-context")
+# def isRAG():
+#     # check knowledge is initalised
+#     global vector_store
+#     if vector_store:
+#         return jsonify({
+#             "message": True
+#         })
+#     return jsonify({"message": False})
 
-@app.route("/remove-context")
-def removeRAG():
-    global vector_store
-    vector_store = None
-    # empty uplaod folder
-    for file in os.listdir("upload"):
-        os.remove(os.path.join("upload", file))
-    return jsonify({"message": "Context removed"})
+# @app.route("/remove-context")
+# def removeRAG():
+#     global vector_store
+#     vector_store = None
+#     # empty uplaod folder
+#     for file in os.listdir("upload"):
+#         os.remove(os.path.join("upload", file))
+#     return jsonify({"message": "Context removed"})
 
 
 

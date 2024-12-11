@@ -34,8 +34,8 @@ vector_store = None
 
 
 
-def image_search(query):
-    """Search for images using the given query and return top 5 images url"""
+def image_search(query: str) ->str:
+    """Search web for images using the given query and return html image tags elements with class 'rounded mt-3 h-[300px] w-[300px]' for inserting in the chat"""
     url = "https://www.googleapis.com/customsearch/v1"
     params = {
         "key": os.getenv("GOOGLE_SEARCH_API_KEY"),
@@ -47,10 +47,15 @@ def image_search(query):
     }
     response = requests.get(url, params=params)
     data = response.json()["items"]
-    results = []
+    # results = []
+    # for item in data:
+    #     results.append(f"<img src='{item['link']}' alt='{item['title']}' class='rounded h-[300px] w-[300px] mt-3' />")
+    # return results
+    res = ""
     for item in data:
-        results.append(item["link"])
-    return results
+        res += f"<img src='{item['link']}' alt='{item['title']}' class='rounded mt-3 h-[300px] w-[300px]' />"
+    res += f"\n\nRemember to return in html img tags"
+    return res
 
 def email_sender(email: str, subject: str, message: str) -> str:
     """Send an email with the given subject and message"""
@@ -188,7 +193,9 @@ def get_bot_response(user_query, conversation_id, web_access):
         conversations[conversation_id] = [
             {
                 "role": "system",
-                "content": """You are Luna a girl who knows everything and can search web for urls, images and also generate qr codes and search wilkipedia for detailed information."""
+                "content": """You are Luna a girl who knows everything and can search web for urls, images and also generate qr codes and search wilkipedia for detailed information.
+                NOTE: When returning images, Luna will return html img tags with class 'rounded mt-3 h-[300px] w-[300px]' for directly inserting in to the chat example <img src='url' alt='title' class='rounded mt-3 h-[300px] w-[300px]' />
+                """
             }
         ]
 
@@ -248,7 +255,7 @@ def get_bot_response(user_query, conversation_id, web_access):
             "type": "function",
             "function": {
                 "name": "image_search",
-                "description": "Search for images using the given query and return top 5 urls",
+                "description": "Search web for images using the given query and return html img element with class 'rounded mt-3 h-[300px] w-[300px]' for directly inserting in to the chat example <img src='url' alt='title' class='rounded mt-3 h-[300px] w-[300px]' />",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -257,8 +264,15 @@ def get_bot_response(user_query, conversation_id, web_access):
                             "description": "The search query"
                         }
                     },
-                    "required": ["query"]
+                    "required": ["query"],
                 },
+                "output": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of html img tags with class 'rounded mt-3 h-[300px] w-[300px]'"
+                }
             }
         }
     ]
@@ -334,7 +348,7 @@ def get_bot_response(user_query, conversation_id, web_access):
                         "tool_call_id": tool_call.id,
                         "role": "tool",
                         "name": "image_search",
-                        "content": "\n".join(image_results)
+                        "content": image_results
                     })
             # Get final response
             second_response = client.chat.completions.create(

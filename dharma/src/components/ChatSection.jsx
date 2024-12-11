@@ -8,7 +8,7 @@ import { Button } from "./ui/button";
 import useSideBar from "@/store/useSideBar";
 
 const textFormatter = (text) => {
-  // console.log(text);
+  console.log(text);
   // Order matters - process nested formatting first
 
   // Headers (support h1-h6)
@@ -17,21 +17,21 @@ const textFormatter = (text) => {
     return `<h${level}>${content}</h${level}>`;
   });
 
-  if (text.includes("[image_search_tool_used]")) {
-    text = text.replace(
-      /\[(.*?)\]\((.*?)\)/g,
-      '<img src="$2" alt="$1" class="rounded h-[300px] w-[300px] mt-3"/>'
-    );
-    // remove the [image_search_tool_used] from the text
-    text = text.replace(/\[image_search_tool_used\]/g, "");
-  } else if (text.includes("[web_search_tool_used]")) {
-    text = text.replace(
-      /\[(.*?)\]\((.*?)\)/g,
-      '<a href="$2" class="text-blue-500" target="_blank">$1</a>'
-    );
-    // remove the [web_search_tool_used] from the text
-    text = text.replace(/\[web_search_tool_used\]/g, "");
-  }
+  // if (text.includes("[image_search_tool_used]")) {
+  //   text = text.replace(
+  //     /\[(.*?)\]\((.*?)\)/g,
+  //     '<img src="$2" alt="$1" class="rounded h-[300px] w-[300px] mt-3"/>'
+  //   );
+  //   // remove the [image_search_tool_used] from the text
+  //   text = text.replace(/\[image_search_tool_used\]/g, "");
+  // } else if (text.includes("[web_search_tool_used]")) {
+  //   text = text.replace(
+  //     /\[(.*?)\]\((.*?)\)/g,
+  //     '<a href="$2" class="text-blue-500" target="_blank">$1</a>'
+  //   );
+  //   // remove the [web_search_tool_used] from the text
+  //   text = text.replace(/\[web_search_tool_used\]/g, "");
+  // }
 
   // Bold
   text = text.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
@@ -40,7 +40,7 @@ const textFormatter = (text) => {
   text = text.replace(/\*(.*?)\*/g, "<i>$1</i>");
 
   // Underline
-  text = text.replace(/_(.*?)_/g, "<u>$1</u>");
+  // text = text.replace(/_(.*?)_/g, "<u>$1</u>");
 
   // Strikethrough
   text = text.replace(/~(.*?)~/g, "<s>$1</s>");
@@ -79,10 +79,10 @@ const textFormatter = (text) => {
   // if found ![text](url) then replace with <img src="url" alt="text" class="rounded h-[300px] w-[300px] rouned-2xl mt-3 "/>
 
   // if found [text](url) then replace with <a href="url" class="text-blue-500" target="_blank">text</a>
-  // text = text.replace(
-  //   /\[(.*?)\]\((.*?)\)/g,
-  //   '<a href="$2" class="text-blue-500" target="_blank">$1</a>'
-  // );
+  text = text.replace(
+    /\[(.*?)\]\((.*?)\)/g,
+    '<a href="$2" class="text-blue-500" target="_blank">$1</a>'
+  );
 
   //if \n is present then replace it with <br>
   text = text.replace(/\n/g, "<br>");
@@ -136,15 +136,25 @@ const Bubbles = ({ message }) => {
       >
         <div className="bg-red-500 h-4 w-4 rounded-full"></div>
         {/* {message.content} */}
-        <div className="flex flex-col gap-1">
-          <div
-            className={`p-2 rounded-lg max-w-[90vw] sm:max-w-[500px] ${
-              message.role === "assistant" ? " border" : "bg-blue-500"
-            } text-sm`}
-            dangerouslySetInnerHTML={{
-              __html: textFormatter(message.content),
-            }}
-          ></div>
+        <div className="flex flex-col gap-1"> 
+          {message.role == "assistant" ? (
+            <div
+              className={`p-2 rounded-lg max-w-[90vw] sm:max-w-[500px] ${
+                message.role === "assistant" ? " border" : "bg-blue-500"
+              } text-sm`}
+              dangerouslySetInnerHTML={{
+                __html: textFormatter(message.content),
+              }}
+            ></div>
+          ) : (
+            <div
+              className={`p-2 rounded-lg max-w-[90vw] sm:max-w-[500px] ${
+                message.role === "assistant" ? " border" : "bg-blue-500"
+              } text-sm`}
+            >
+              {message.content}
+            </div>
+          )}
           {message.role == "assistant" && (
             <Button
               size="icon"

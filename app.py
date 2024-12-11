@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 from groq import Groq
 import os
-from werkzeug.utils import secure_filename
+# from werkzeug.utils import secure_filename
 # from langchain_community.vectorstores import FAISS
 # from langchain_community.embeddings import HuggingFaceEmbeddings
 # from langchain_community.document_loaders import PyPDFLoader, TextLoader

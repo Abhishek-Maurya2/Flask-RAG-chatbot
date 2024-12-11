@@ -16,7 +16,7 @@ function Sidebar() {
   const getHistory = async () => {
     try {
       const url = `${import.meta.env.VITE_URL}/list-history`;
-      console.log(url)
+      // console.log(url)
       const response = await axios.get(url);
       setHistory(response.data);
       // console.log(response.data);
@@ -36,7 +36,7 @@ function Sidebar() {
   const ClearHistory = async () => {
     try {
       const response = await axios
-        .get(`${VITE_URL}/clear-history`)
+        .get(`${import.meta.env.VITE_URL}/clear-history`)
         .then(() => {
           setHistory([]);
         });

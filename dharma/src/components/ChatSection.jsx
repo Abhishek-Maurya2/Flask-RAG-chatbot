@@ -191,10 +191,10 @@ function ChatSection() {
 
     try {
       const response = await axios
-        .post(`${VITE_URL}/chat`, formData)
+        .post(`${import.meta.env.VITE_URL}/chat`, formData)
         .then((res) => {
           addMessage({ role: "assistant", content: res.data.response });
-          console.log(res.data);
+          // console.log(res.data);
           setMsg("");
           setSending(false);
           handleSpeak(res.data.response);

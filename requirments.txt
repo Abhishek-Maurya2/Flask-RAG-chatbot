@@ -1,0 +1,11 @@
+Flask
+groq
+werkzeug
+langchain_community
+langchain
+mimetypes
+requests
+beautifulsoup4
+python-dotenv
+flask-cors
+qrcode

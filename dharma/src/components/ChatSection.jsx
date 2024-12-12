@@ -8,7 +8,7 @@ import { Button } from "./ui/button";
 import useSideBar from "@/store/useSideBar";
 
 const textFormatter = (text) => {
-  console.log(text);
+  // console.log(text);
   // Order matters - process nested formatting first
 
   // Headers (support h1-h6)
@@ -217,7 +217,7 @@ function ChatSection() {
           // console.log(res.data);
           setMsg("");
           setSending(false);
-          handleSpeak(res.data.response);
+          // handleSpeak(res.data.response);
         });
     } catch (error) {
       console.error(error);

@@ -32,6 +32,8 @@ vector_store = None
 # Ai Agents - wikipedia, web search, qr code, email sender
 
 
+# def youtube_search(query: str) -> str:
+#     """Search youtube for the given query and return video"""
 
 
 def image_search(query: str) ->str:

@@ -6,7 +6,7 @@ import { Button } from "./ui/button";
 import { SidebarClose } from "lucide-react";
 import useSideBar from "@/store/useSideBar";
 
-function Sidebar() {
+function SidebarComponent() {
   const { setConversationId, loadMessage, clearMessages, trigger } =
     useMessageStore();
   const { isSideBarOpen, toggleSideBar } = useSideBar();
@@ -50,36 +50,23 @@ function Sidebar() {
   }, [trigger]);
 
   return (
-    <div
-      className={`${
-        isSideBarOpen ? "flex" : "hidden"
-      } flex-col border-r min-w-[100vw] sm:min-w-[250px] p-4 rounded-e-2xl gap-2 overflow-hidden`}
-    >
-      <div className="flex flex-row items-center justify-between mb-4">
-        <p className="text-xl font-semibold">Dharma Ai</p>
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={() => toggleSideBar(!isSideBarOpen)}
-        >
-          <SidebarClose />
-        </Button>
-      </div>
+    <div className={`flex flex-col justify-between w-full h-full px-4 py-2`}>
       <Button onClick={() => handleNewChat()}>New Chat</Button>
       <p className="text-xl mt-2">History</p>
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <div className="flex flex-col gap-2 h-[60vh] overflow-auto">
+        <div className="flex flex-col gap-2 h-[63vh] overflow-auto">
           {/* history is not a array */}
           {history
             .slice()
             .reverse()
             .map((item, index) => (
               <div key={index} className="flex flex-row justify-between">
-                <button
+                <Button
                   onClick={() => loadChatHistory(item)}
-                  className="p-1 rounded w-full text-start hover:bg-[#ffffff5f]"
+                  className="w-full items-center justify-start px-2"
+                  variant="ghost"
                 >
                   <p
                     className="
@@ -88,15 +75,17 @@ function Sidebar() {
                   >
                     {item.messages[1].content}
                   </p>
-                </button>
+                </Button>
               </div>
             ))}
         </div>
       )}
-      <Button onClick={() => ClearHistory()}>Delete History</Button>
-      <ThemeToggleButton />
+      <div className="flex flex-col gap-2 justify-between">
+        <Button onClick={() => ClearHistory()}>Delete History</Button>
+        <ThemeToggleButton />
+      </div>
     </div>
   );
 }
 
-export default Sidebar;
+export default SidebarComponent;

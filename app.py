@@ -31,7 +31,13 @@ vector_store = None
 
 # Ai Agents - wikipedia, web search, qr code, email sender
 
- 
+
+def read_website(url: str) -> str:
+    """Read the content of the given website and return the text"""
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
+    paragraphs = soup.find_all("p")
+    return "\n\n".join([p.get_text() for p in paragraphs]) 
 
 def image_search(query: str) ->str:
     """Search web for images using the given query and return html image tags elements with class 'rounded mt-3 h-[300px] w-[300px]' for inserting the imagse in the chat"""

@@ -1,4 +1,13 @@
-import { Send, SidebarOpen, Volume2 } from "lucide-react";
+import {
+  ArrowUp,
+  Copy,
+  Send,
+  Share2Icon,
+  SidebarOpen,
+  ThumbsDown,
+  ThumbsUp,
+  Volume2,
+} from "lucide-react";
 import React, { useRef, useEffect, useState } from "react";
 import axios from "axios";
 import useMessageStore from "@/store/useMessageStore";
@@ -6,6 +15,9 @@ import { Skeleton } from "./ui/skeleton";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import useSideBar from "@/store/useSideBar";
+import { SidebarTrigger } from "./ui/sidebar";
+import { Separator } from "./ui/separator";
+import useThemeStore from "@/store/useThemeStore";
 
 const textFormatter = (text) => {
   // console.log(text);
@@ -119,6 +131,7 @@ const handleSpeak = async (msg) => {
   }
 };
 const Bubbles = ({ message }) => {
+  const theme = useThemeStore((state) => state.theme);
   return (
     <div
       className={`flex flex-row px-2 ${
@@ -134,48 +147,91 @@ const Bubbles = ({ message }) => {
       }
         `}
       >
-        <div className="bg-red-500 h-4 w-4 rounded-full"></div>
+        <div
+          className={`h-4 w-4 rounded-full
+            ${
+              message.role === "assistant"
+                ? "bg-gradient-to-br from-blue-500 to-red-500"
+                : "bg-gradient-to-br from-blue-500"
+            }
+        
+        `}
+        ></div>
         {/* {message.content} */}
-        <div className="flex flex-col gap-1"> 
+        <div className="flex flex-col gap-1 items-start">
           {message.role == "assistant" ? (
             <div
-              className={`p-2 rounded-lg max-w-[90vw] sm:max-w-[500px] ${
-                message.role === "assistant" ? " border" : "bg-blue-500"
-              } text-sm`}
+              className={`p-2 rounded-lg max-w-[90vw] sm:max-w-[500px] border text-sm ${
+                theme == "dark" ? "bg-[#18181b]" : "bg-[#fafafa]"
+              }`}
               dangerouslySetInnerHTML={{
                 __html: textFormatter(message.content),
               }}
             ></div>
           ) : (
             <div
-              className={`p-2 rounded-lg max-w-[90vw] sm:max-w-[500px] ${
-                message.role === "assistant" ? " border" : "bg-blue-500"
-              } text-sm`}
+              className={`p-2 rounded-lg max-w-[90vw] sm:max-w-[500px] bg-blue-500 text-sm`}
             >
               {message.content}
             </div>
           )}
           {message.role == "assistant" && (
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={() => handleSpeak(message.content)}
-              className="sm:hidden"
-            >
-              <Volume2 />
-            </Button>
+            <div className="border rounded-lg">
+              <Button
+                size="icon"
+                variant="outline"
+                className="border-0"
+                onClick={() => handleSpeak(message.content)}
+              >
+                <Volume2 />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                className="border-0"
+                onClick={() => {
+                  navigator.clipboard.writeText(message.content);
+                  toast.success("Copied to clipboard");
+                }}
+              >
+                <Copy />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                className="border-0"
+                onClick={() => {
+                  navigator.share({
+                    title: "Dharma Ai",
+                    text: message.content,
+                  });
+                }}
+              >
+                <Share2Icon />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                className="border-0"
+                onClick={() => {
+                  toast.success("Thanks for the feedback");
+                }}
+              >
+                <ThumbsUp />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                className="border-0"
+                onClick={() => {
+                  toast.error("Thanks for the feedback");
+                }}
+              >
+                <ThumbsDown />
+              </Button>
+            </div>
           )}
         </div>
-        {message.role == "assistant" && (
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => handleSpeak(message.content)}
-            className="hidden sm:flex"
-          >
-            <Volume2 />
-          </Button>
-        )}
       </div>
     </div>
   );
@@ -195,9 +251,17 @@ function SkeletonDemo() {
 
 function ChatSection() {
   const { messages, addMessage, conversationId } = useMessageStore();
-  const { isSideBarOpen, toggleSideBar } = useSideBar();
+  const theme = useThemeStore((state) => state.theme);
   const [msg, setMsg] = useState("");
   const [sending, setSending] = useState(false);
+  const [triggerSend, setTriggerSend] = useState(false);
+
+  useEffect(() => {
+    if (triggerSend) {
+      handleSendMessage();
+      setTriggerSend(false);
+    }
+  }, [msg, triggerSend]);
 
   const handleSendMessage = async () => {
     if (sending) return;
@@ -237,53 +301,73 @@ function ChatSection() {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth <= 640) {
-        toggleSideBar(false);
-      } else {
-        toggleSideBar(true);
-      }
+      document.documentElement.style.setProperty(
+        "--vh",
+        `${window.innerHeight * 0.01}px`
+      );
     };
-
     window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [toggleSideBar]);
-
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   return (
-    <div className="flex justify-between flex-col w-full ">
-      {/* head */}
-
-      <div className="flex flex-row items-center justify-between px-4 py-2">
-        {!isSideBarOpen ? (
-          <button
-            className="p-0 m-0"
-            onClick={() => {
-              toggleSideBar(!isSideBarOpen);
-            }}
-          >
-            <SidebarOpen size={20} />
-          </button>
-        ) : (
-          <div></div>
-        )}
-        <p className="text-xl font-semibold">Dharma Ai</p>
-        <div></div>
-      </div>
-
+    <div
+      className="flex flex-col gap-1"
+      style={{ height: "calc(var(--vh, 1vh) * 100)" }}
+    >
+      <header className="flex items-center gap-2 border-b px-4 py-3">
+        <SidebarTrigger className="-ml-1" />
+        <Separator orientation="vertical" className="mr-2 h-4" />
+        <p>Dharma Ai</p>
+      </header>
       {/* chats */}
-      <div className="flex flex-col gap-2 h-[90vh] overflow-y-auto">
-        {messages.map((message, index) => {
-          return <Bubbles key={index} message={message} />;
-        })}
-        {sending && <SkeletonDemo />}
+      <div className="flex flex-col gap-2 overflow-y-auto flex-1">
+        {messages.length === 0 ? (
+          <div className="flex flex-col gap-2 items-center justify-center h-full w-full">
+            <p className="text-[30px] mb-2">What can I help with?</p>
+            <div className="flex flex-row flex-wrap items-center justify-center gap-2 mx-4">
+              {[
+                "Images of Shinchan",
+                "Search web for News in India",
+                "Search Wilkipedia for Gas Giants",
+                "What is the capital of India?",
+                "What is the weather in Delhi ?",
+                "Write code for a simple calculator",
+              ].map((item, index) => (
+                <Button
+                  key={index}
+                  variant="ghost"
+                  className={`border rounded-full ${
+                    theme == "dark" ? "bg-[#18181b]" : "bg-[#fafafa]"
+                  }`}
+                  onClick={() => {
+                    setMsg(item);
+                    setTriggerSend(true);
+                  }}
+                >
+                  {item}
+                </Button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            {messages.map((message, index) => {
+              return <Bubbles key={index} message={message} />;
+            })}
+            {sending && <SkeletonDemo />}
+          </>
+        )}
         <div ref={chatEndRef} />
       </div>
 
       {/* dock */}
       <div className="pt-1 flex flex-col gap-1 items-center justify-center">
-        <div className="flex items-center justify-center border-2 bg-inherit text-inherit rounded-2xl overflow-hidden">
+        <div
+          className={`${
+            theme == "dark" ? "bg-[#18181b]" : "bg-[#fafafa]"
+          } flex items-center justify-center rounded-full overflow-hidden border-2 px-2`}
+        >
           <input
             type="text"
             placeholder="Enter here.."
@@ -295,12 +379,13 @@ function ChatSection() {
           {sending ? (
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
           ) : (
-            <button
-              className="p-3 rounded-full"
+            <Button
+              className="rounded-full h-8 w-8"
+              size="icon"
               onClick={() => handleSendMessage()}
             >
-              <Send size={20} />
-            </button>
+              <ArrowUp style={{ width: "28px", height: "28px" }} />
+            </Button>
           )}
         </div>
         <p className="text-sm">Ai can make mistakes. Check important info.</p>

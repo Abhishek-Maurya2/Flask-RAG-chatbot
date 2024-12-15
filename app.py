@@ -34,10 +34,22 @@ vector_store = None
 
 def read_website(url: str) -> str:
     """Read the content of the given website and return the text"""
-    response = requests.get(url)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "TE": "Trailers",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "Cache-Control": "max-age=0",
+        "Host": "www.google.com",
+        "Referer": "https://www.google.com/",
+    }
+    response = requests.get(url, headers=headers)
     soup = BeautifulSoup(response.text, "html.parser")
     paragraphs = soup.find_all("p")
-    return "\n\n".join([p.get_text() for p in paragraphs]) 
+    return "\n\n".join([p.get_text() for p in paragraphs])
 
 def image_search(query: str) ->str:
     """Search web for images using the given query and return html image tags elements with class 'rounded mt-3 h-[300px] w-[300px]' for inserting the imagse in the chat"""
@@ -59,7 +71,7 @@ def image_search(query: str) ->str:
     res = ""
     for item in data:
         res += f"<img src='{item['link']}' alt='{item['title']}' class='rounded mt-3 h-[300px] w-[300px]' />"
-    res += f"\n\nRemember to return images in html img tags for displaying in the chat example <img src='url' alt='title' class='rounded mt-3 h-[300px] w-[300px]' />"
+    res += f"\n\nRemember to return images in html img tags for displaying in the chat example ```<img src='url' alt='title' class='rounded mt-3 h-[300px] w-[300px]' />```"
     return res
 
 def email_sender(email: str, subject: str, message: str) -> str:
@@ -294,6 +306,23 @@ def get_bot_response(user_query, conversation_id, web_access):
                     "required": ["query"],
                 }
             }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "read_website",
+                "description": "Read the content of the given website and summarize it and answer the query",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "description": "The website URL"
+                        }
+                    },
+                    "required": ["url"]
+                }
+            }
         }
     ]
     
@@ -370,6 +399,19 @@ def get_bot_response(user_query, conversation_id, web_access):
                         "name": "image_search",
                         "content": image_results
                     })
+
+                elif tool_call.function.name == "read_website":
+                    function_args = json.loads(tool_call.function.arguments)
+                    web_summary = read_website(function_args["url"])
+                    
+                    # Add tool response
+                    conversations[conversation_id].append({
+                        "tool_call_id": tool_call.id,
+                        "role": "tool",
+                        "name": "read_website",
+                        "content": web_summary
+                    })
+                    
             # Get final response
             second_response = client.chat.completions.create(
                 messages=conversations[conversation_id],

@@ -1,6 +1,8 @@
 import {
   ArrowUp,
   Copy,
+  Image,
+  Paperclip,
   Send,
   Share2Icon,
   SidebarOpen,
@@ -132,6 +134,12 @@ const handleSpeak = async (msg) => {
 };
 const Bubbles = ({ message }) => {
   const theme = useThemeStore((state) => state.theme);
+  const userFormattedText = (text) => {
+    if (text.includes("Context: ")) {
+      text = text.split("Context:")[0];
+    }
+    return text;
+  };
   return (
     <div
       className={`flex flex-row px-2 ${
@@ -172,7 +180,7 @@ const Bubbles = ({ message }) => {
             <div
               className={`p-2 rounded-lg max-w-[90vw] sm:max-w-[500px] bg-blue-500 text-sm`}
             >
-              {message.content}
+              {userFormattedText(message.content)}
             </div>
           )}
           {message.role == "assistant" && (
@@ -263,32 +271,61 @@ function ChatSection() {
     }
   }, [msg, triggerSend]);
 
+  const getContext = async (query) => {
+    if (query === "") return "";
+    if (!file) return "";
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_RAG_URL}/retrieve`,
+        {
+          params: { query: query },
+        }
+      );
+      console.log(response.data.context);
+      let context = "";
+      response.data.context.forEach((message) => {
+        context += message + " ";
+      });
+      return context;
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message);
+      return "";
+    }
+  };
+
   const handleSendMessage = async () => {
     if (sending) return;
     if (msg === "") return;
+
     const formData = new FormData();
     formData.append("conversation_id", conversationId);
-    formData.append("message", msg);
-    formData.append("provide-web-Access", true);
+
+    const context = await getContext(msg);
+    if (context !== "") {
+      formData.append("message", msg + "\n\nContext: " + context);
+    } else {
+      formData.append("message", msg);
+    }
+
     addMessage({ role: "user", content: msg });
     setSending(true);
 
     try {
-      const response = await axios
-        .post(`${import.meta.env.VITE_URL}/chat`, formData)
-        .then((res) => {
-          addMessage({ role: "assistant", content: res.data.response });
-          // console.log(res.data);
-          setMsg("");
-          setSending(false);
-          // handleSpeak(res.data.response);
-        });
+      const response = await axios.post(
+        `${import.meta.env.VITE_URL}/chat`,
+        formData
+      );
+      addMessage({ role: "assistant", content: response.data.response });
+      setMsg("");
+      setSending(false);
     } catch (error) {
       console.error(error);
       toast.error(error.message);
       setSending(false);
     }
   };
+
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       handleSendMessage();
@@ -310,6 +347,31 @@ function ChatSection() {
     handleResize();
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const [file, setFile] = useState(null);
+  const handleRAG = async () => {
+    // open file dialog
+    const input = document.createElement("input");
+    input.type = "file";
+    input.onchange = async (e) => {
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_RAG_URL}/initialize`,
+          formData
+        );
+        toast.success(response.data.message);
+      } catch (error) {
+        toast.error(error.message);
+      }
+    };
+    input.click();
+  };
+
   return (
     <div
       className="flex flex-col gap-1"
@@ -366,29 +428,63 @@ function ChatSection() {
         <div
           className={`${
             theme == "dark" ? "bg-[#18181b]" : "bg-[#fafafa]"
-          } flex items-center justify-center rounded-full overflow-hidden border-2 px-2`}
+          } flex flex-col rounded-3xl overflow-hidden border-2 px-2 w-[90vw] sm:w-[600px]`}
         >
-          <input
-            type="text"
-            placeholder="Enter here.."
-            className="focus:outline-none w-[80vw] sm:w-[600px] p-3 bg-inherit"
-            value={msg}
-            onChange={(e) => setMsg(e.target.value)}
-            onKeyPress={(e) => handleKeyPress(e)}
-          />
-          {sending ? (
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-          ) : (
-            <Button
-              className="rounded-full h-8 w-8"
-              size="icon"
-              onClick={() => handleSendMessage()}
-            >
-              <ArrowUp style={{ width: "28px", height: "28px" }} />
-            </Button>
+          {file && (
+            <div className="flex flex-row items-center gap-2">
+              <div className="bg-red-500 h-12 w-12 rounded-lg mt-3 flex items-center justify-center">
+                {
+                  {
+                    "image/png": <Image />,
+                    "image/jpeg": <Image />,
+                    "image/jpg": <Image />,
+                    "application/pdf": <p>PDF</p>,
+                    "application/msword": <p>DOC</p>,
+                    "application/xlsx": <p>XLS</p>,
+                    "application/pptx": <p>PPT</p>,
+                    "application/csv": <p>CSV</p>,
+                  }[file?.type]
+                }
+              </div>
+              <p>
+                {file?.name} -{" "}
+                {file?.size && (file.size / 1024 / 1024).toFixed(1)} MB
+              </p>
+            </div>
           )}
+          <div className="flex flex-row items-center flex-1">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="rounded-full -rotate-45"
+              onClick={() => handleRAG()}
+            >
+              <Paperclip />
+            </Button>
+            <input
+              type="text"
+              placeholder="Enter here.."
+              className="focus:outline-none p-3 bg-inherit flex-1"
+              value={msg}
+              onChange={(e) => setMsg(e.target.value)}
+              onKeyPress={(e) => handleKeyPress(e)}
+            />
+            {sending ? (
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            ) : (
+              <Button
+                className="rounded-full h-8 w-8"
+                size="icon"
+                onClick={() => handleSendMessage()}
+              >
+                <ArrowUp style={{ width: "28px", height: "28px" }} />
+              </Button>
+            )}
+          </div>
         </div>
-        <p className="text-sm">Ai can make mistakes. Check important info.</p>
+        <p className="text-sm mb-1">
+          Ai can make mistakes. Check important info.
+        </p>
       </div>
     </div>
   );

@@ -3,20 +3,24 @@ import ThemeToggleButton from "./ThemeToggleButton";
 import axios from "axios";
 import useMessageStore from "@/store/useMessageStore";
 import { Button } from "./ui/button";
-import { SidebarClose } from "lucide-react";
-import useSideBar from "@/store/useSideBar";
 
 function SidebarComponent() {
   const { setConversationId, loadMessage, clearMessages, trigger } =
     useMessageStore();
-  const { isSideBarOpen, toggleSideBar } = useSideBar();
 
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const pingRAG = async () => {
+    try {
+      const url = `${import.meta.env.VITE_RAG_URL}`;
+      const response = await axios.get(url);
+    } catch (error) {
+      console.error(error);
+    }
+  };
   const getHistory = async () => {
     try {
       const url = `${import.meta.env.VITE_URL}/list-history`;
-      // console.log(url)
       const response = await axios.get(url);
       setHistory(response.data);
       // console.log(response.data);
@@ -48,7 +52,16 @@ function SidebarComponent() {
   useEffect(() => {
     getHistory().then(() => setLoading(false));
   }, [trigger]);
-
+  useEffect(() => {
+    pingRAG();
+  }, []);
+  
+  const userFormattedText = (text) => {
+    if (text.includes("Context: ")) {
+      text = text.split("Context:")[0];
+    }
+    return text;
+  };
   return (
     <div className={`flex flex-col justify-between w-full h-full px-4 py-2`}>
       <Button onClick={() => handleNewChat()}>New Chat</Button>

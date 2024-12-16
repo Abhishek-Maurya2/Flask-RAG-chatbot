@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Base API</title>
+</head>
+<body>
+    <h1>Knowledge Base API</h1>
+
+    <h2>Initialize Knowledge Base</h2>
+    <form id="initialize-form" enctype="multipart/form-data">
+        <label for="file">Select file:</label>
+        <input type="file" id="file" name="file" required>
+        <button type="submit">Initialize</button>
+    </form>
+    <p id="initialize-response"></p>
+
+    <h2>Retrieve Documents</h2>
+    <form id="retrieve-form">
+        <label for="query">Enter query:</label>
+        <input type="text" id="query" name="query" required>
+        <button type="submit">Retrieve</button>
+    </form>
+    <ul id="retrieve-response"></ul>
+
+    <script>
+        document.getElementById('initialize-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData();
+            formData.append('file', document.getElementById('file').files[0]);
+
+            const response = await fetch('/initialize', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            document.getElementById('initialize-response').innerText = result.message;
+        });
+
+        document.getElementById('retrieve-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const query = document.getElementById('query').value;
+
+            const response = await fetch(`/retrieve?query=${encodeURIComponent(query)}`);
+            const result = await response.json();
+
+            const responseList = document.getElementById('retrieve-response');
+            responseList.innerHTML = '';
+            result.context.forEach(doc => {
+                const listItem = document.createElement('li');
+                listItem.innerText = doc;
+                responseList.appendChild(listItem);
+            });
+        });
+    </script>
+</body>
+</html>

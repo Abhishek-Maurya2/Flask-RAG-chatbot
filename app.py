@@ -221,6 +221,7 @@ def get_bot_response(user_query, conversation_id, web_access):
                 <img src=\'url_from_web\' alt=\'Title_if_available\' class=\'rounded h-[300px] w-[300px] mt-3 \'/>
                 ```
                 * You can generate QR codes from text data if asked to do so.
+                * You can also read the content of a website and summarize it when asked to do.
                
                 """
             }

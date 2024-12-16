@@ -2,13 +2,15 @@ from flask import Flask, request, jsonify, render_template
 from sentence_transformers import SentenceTransformer, util
 from pymongo import MongoClient
 from flask_cors import CORS
+from dotenv import load_dotenv
+import os
 
-
+load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
 # Initialize MongoDB client
-uri = "mongodb+srv://abhishek12223228:aNgCiKImHqycqNHA@rag.7ubep.mongodb.net/?retryWrites=true&w=majority&tls=true&tlsAllowInvalidCertificates=true"
+uri = os.getenv("MONGO_URI")
 mongo_client = MongoClient(uri)
 db = mongo_client["RAG"]
 collection = db["RAG"]
@@ -68,4 +70,4 @@ def retrieve():
     return jsonify({"context": documents}), 200
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=3000)
+    app.run(debug=True, host="0.0.0.0", port=8080)

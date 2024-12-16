@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from sentence_transformers import SentenceTransformer, util
-from pymongo import MongoClient
+from pymongo import MongoClient, server_api
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
@@ -11,7 +11,7 @@ CORS(app)
 
 # Initialize MongoDB client
 uri = os.getenv("MONGO_URI")
-mongo_client = MongoClient(uri)
+mongo_client = MongoClient(uri, server_api=server_api.ServerApi(version="1", strict=False))
 db = mongo_client["RAG"]
 collection = db["RAG"]
 
@@ -70,4 +70,4 @@ def retrieve():
     return jsonify({"context": documents}), 200
 
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=8080)

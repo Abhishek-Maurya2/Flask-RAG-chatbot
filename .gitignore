@@ -3,6 +3,7 @@ venv/
 env/
 
 main.py
+1.py
 # Ignore uploads folder
 uploads/
 

@@ -8,7 +8,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Initialize MongoDB client
-uri = "mongodb+srv://abhishek12223228:aNgCiKImHqycqNHA@rag.7ubep.mongodb.net/?retryWrites=true&w=majority&appName=RAG"
+uri = "mongodb+srv://abhishek12223228:aNgCiKImHqycqNHA@rag.7ubep.mongodb.net/?retryWrites=true&w=majority&tls=true&tlsAllowInvalidCertificates=true"
 mongo_client = MongoClient(uri)
 db = mongo_client["RAG"]
 collection = db["RAG"]
@@ -68,4 +68,4 @@ def retrieve():
     return jsonify({"context": documents}), 200
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=3000)

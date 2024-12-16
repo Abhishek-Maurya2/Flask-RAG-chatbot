@@ -56,12 +56,6 @@ function SidebarComponent() {
     pingRAG();
   }, []);
   
-  const userFormattedText = (text) => {
-    if (text.includes("Context: ")) {
-      text = text.split("Context:")[0];
-    }
-    return text;
-  };
   return (
     <div className={`flex flex-col justify-between w-full h-full px-4 py-2`}>
       <Button onClick={() => handleNewChat()}>New Chat</Button>

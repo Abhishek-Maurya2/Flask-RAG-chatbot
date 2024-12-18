@@ -117,7 +117,7 @@ def get_bot_response(user_query, conversation_id, RAG):
             "type": "function",
             "function": {
                 "name": "read_website",
-                "description": "Read the content of the given website and summarize it and answer the query",
+                "description": "Read the content of the given website and summarize it to answer the query",
                 "parameters": {
                     "type": "object",
                     "properties": {

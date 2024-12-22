@@ -59,6 +59,13 @@ const textFormatter = (text) => {
       part = part.replace(/\*\*(.*?)_.*?\*\*/g, "<strong><em>$1</em></strong>");
       // Line break (*)
       part = part.replace(/\n/g, "<br />");
+      // URL [text](url)
+      part = part.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
+      // Image ![alt](url)
+      part = part.replace(
+        /!\[(.*?)\]\((.*?)\)/g,
+        '<img src="$2" alt="$1" class="rounded h-[300px] w-[300px]" />'
+      );
       return <span key={index} dangerouslySetInnerHTML={{ __html: part }} />;
     }
   });

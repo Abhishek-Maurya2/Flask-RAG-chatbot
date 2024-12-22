@@ -43,6 +43,7 @@ const processBlocks = (block, index) => {
 };
 
 const textFormatter = (text) => {
+  // console.log(text);
   // Handle code blocks (```)
   const codeBlockRegex = /```(.*?)```/gs;
   const parts = text.split(codeBlockRegex);
@@ -53,12 +54,12 @@ const textFormatter = (text) => {
     } else {
       // Image ![alt](url)
       part = part.replace(
-        /!\[(.*?)\]\((.*?)\)/g,
+        /!\[(.*?)\]\((http[s]?:\/\/[^\s]+)\)/g,
         '<img src="$2" alt="$1" class="rounded h-[300px] w-[300px]" />'
       );
       // URL [text](url)
       part = part.replace(
-        /\[(.*?)\]\((.*?)\)/g,
+        /\[(.*?)\]\((http[s]?:\/\/[^\s]+)\)/g,
         '<a href="$2" class="text-blue-500 hover:underline">$1</a>'
       );
       // Bold-Italic (**_)

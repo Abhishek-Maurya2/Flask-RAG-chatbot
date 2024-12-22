@@ -60,7 +60,10 @@ const textFormatter = (text) => {
       // Line break (*)
       part = part.replace(/\n/g, "<br />");
       // URL [text](url)
-      part = part.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
+      part = part.replace(
+        /\[(.*?)\]\((.*?)\)/g,
+        '<a href="$2" class="text-blue-500 hover:underline">$1</a>'
+      );
       // Image ![alt](url)
       part = part.replace(
         /!\[(.*?)\]\((.*?)\)/g,

@@ -232,10 +232,6 @@ def get_bot_response(user_query, conversation_id, RAG):
             bot_message = second_response.choices[0].message.content
             if(qr_base64):
                 bot_message += f"\n\n<img src='data:image/png;base64,{qr_base64}' alt='QR Code' class='rounded h-[300px] w-[300px] rouned-2xl mt-3 '/>"
-            elif(image_results):
-                bot_message += f"\n\n[image_search_tool_used]"
-            elif(web_results):
-                bot_message += f"\n\n[web_search_tool_used]"
         else:
             bot_message = response_message.content
 

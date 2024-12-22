@@ -12,6 +12,7 @@ data/
 
 # Ignore env file
 .env
+screenshot.png
 
 # Ignore cache and temporary files
 __pycache__/

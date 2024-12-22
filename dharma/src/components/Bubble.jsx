@@ -51,23 +51,25 @@ const textFormatter = (text) => {
     if (index % 2 === 1) {
       return processBlocks(part, index);
     } else {
+      // Bold-Italic (**_)
+      part = part.replace(/\*\*(.*?)_.*?\*\*/g, "<strong><em>$1</em></strong>");
       // Bold (**)
       part = part.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
       // Italic (*)
       part = part.replace(/\*(.*?)\*/g, "<em>$1</em>");
-      // Bold-Italic (**_)
-      part = part.replace(/\*\*(.*?)_.*?\*\*/g, "<strong><em>$1</em></strong>");
       // Line break (*)
       part = part.replace(/\n/g, "<br />");
-      // URL [text](url)
-      part = part.replace(
-        /\[(.*?)\]\((.*?)\)/g,
-        '<a href="$2" class="text-blue-500 hover:underline">$1</a>'
-      );
+      // Underline (__)
+      part = part.replace(/__(.*?)__/g, "<u>$1</u>");
       // Image ![alt](url)
       part = part.replace(
         /!\[(.*?)\]\((.*?)\)/g,
         '<img src="$2" alt="$1" class="rounded h-[300px] w-[300px]" />'
+      );
+      // URL [text](url)
+      part = part.replace(
+        /\[(.*?)\]\((.*?)\)/g,
+        '<a href="$2" class="text-blue-500 hover:underline">$1</a>'
       );
       return <span key={index} dangerouslySetInnerHTML={{ __html: part }} />;
     }

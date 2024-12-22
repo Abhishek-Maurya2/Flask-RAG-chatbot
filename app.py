@@ -13,13 +13,12 @@ groq_api = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=groq_api)
 conversations = {}
 
-
-def get_context(query) -> str:
-    """Get the context of the query"""
+SYSTEM_PROMPT = ""
 
 def get_bot_response(user_query, conversation_id, RAG):
     if conversation_id not in conversations:
-        if SYSTEM_PROMPT:
+        
+        if SYSTEM_PROMPT or SYSTEM_PROMPT!="":
             conversations[conversation_id] = [
                 {
                     "role": "system",
@@ -306,10 +305,17 @@ def set_system_prompt():
         prompt = request.form.get("system_prompt")
         global SYSTEM_PROMPT
         SYSTEM_PROMPT = prompt
+        # print(SYSTEM_PROMPT)
         return jsonify({"message": "System prompt updated"})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/get-system-prompt")
+def get_system_prompt():
+    global SYSTEM_PROMPT
+    print(SYSTEM_PROMPT)
+    return jsonify({"system_prompt": SYSTEM_PROMPT})
 
 if __name__ == "__main__":
     app.run()

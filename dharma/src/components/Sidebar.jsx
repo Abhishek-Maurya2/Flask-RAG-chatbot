@@ -55,22 +55,16 @@ function SidebarComponent() {
     }
   };
 
-  useEffect(() => {
-    getHistory().then(() => setLoading(false));
-  }, [trigger]);
-  useEffect(() => {
-    pingRAG();
-  }, []);
-
   const handleSystemPrompt = async () => {
     try {
+      const form = new FormData();
+      form.append("system_prompt", systemMessage);
       const response = await axios
-        .post(`${import.meta.env.VITE_URL}/set-system-prompt`, {
-          system_prompt: systemMessage,
-        })
+        .post(`${import.meta.env.VITE_URL}/set-system-prompt`,
+          form
+        )
         .then(() => {
           setSystemPrompt(false);
-          setSystemMessage("");
           toast("System Prompt Updated", "success");
         });
     } catch (error) {
@@ -78,7 +72,24 @@ function SidebarComponent() {
       toast("Failed to update System Prompt", "error");
     }
   };
-
+  const getSystemPrompt = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_URL}/get-system-prompt`
+      );
+      // console.log(response);
+      setSystemMessage(response.data.system_prompt);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  useEffect(() => {
+    getHistory().then(() => setLoading(false));
+  }, [trigger]);
+  useEffect(() => {
+    pingRAG();
+    getSystemPrompt();
+  }, []);
   return (
     <div className={`flex flex-col justify-between w-full h-full px-4 py-2`}>
       <Button onClick={() => handleNewChat()}>New Chat</Button>
@@ -142,7 +153,7 @@ function SidebarComponent() {
             <textarea
               placeholder="Enter your System Prompt"
               className="rounded p-2 bg-inherit border outline-none min-h-52"
-              value={systemMessage}
+              value={systemMessage || ""}
               onChange={(e) => setSystemMessage(e.target.value)}
             ></textarea>
             <div className="flex gap-4 justify-end">

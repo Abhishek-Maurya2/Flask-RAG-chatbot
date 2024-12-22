@@ -51,16 +51,6 @@ const textFormatter = (text) => {
     if (index % 2 === 1) {
       return processBlocks(part, index);
     } else {
-      // Bold-Italic (**_)
-      part = part.replace(/\*\*(.*?)_.*?\*\*/g, "<strong><em>$1</em></strong>");
-      // Bold (**)
-      part = part.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-      // Italic (*)
-      part = part.replace(/\*(.*?)\*/g, "<em>$1</em>");
-      // Line break (*)
-      part = part.replace(/\n/g, "<br />");
-      // Underline (__)
-      part = part.replace(/__(.*?)__/g, "<u>$1</u>");
       // Image ![alt](url)
       part = part.replace(
         /!\[(.*?)\]\((.*?)\)/g,
@@ -71,6 +61,16 @@ const textFormatter = (text) => {
         /\[(.*?)\]\((.*?)\)/g,
         '<a href="$2" class="text-blue-500 hover:underline">$1</a>'
       );
+      // Bold-Italic (**_)
+      part = part.replace(/\*\*(.*?)_.*?\*\*/g, "<strong><em>$1</em></strong>");
+      // Bold (**)
+      part = part.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+      // Italic (*)
+      part = part.replace(/\*(.*?)\*/g, "<em>$1</em>");
+      // Line break (*)
+      part = part.replace(/\n/g, "<br />");
+      // Underline (__)
+      part = part.replace(/__(.*?)__/g, "<u>$1</u>");
       return <span key={index} dangerouslySetInnerHTML={{ __html: part }} />;
     }
   });

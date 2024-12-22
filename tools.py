@@ -30,7 +30,7 @@ def read_website(url: str) -> str:
     return "\n\n".join([p.get_text() for p in paragraphs])
 
 def image_search(query: str) ->str:
-    """Search web for images using the given query and return html image tags elements with class 'rounded mt-3 h-[300px] w-[300px]' for inserting the imagse in the chat"""
+    """Search web for images using the given query and return urls"""
     url = "https://www.googleapis.com/customsearch/v1"
     params = {
         "key": os.getenv("GOOGLE_SEARCH_API_KEY"),
@@ -42,14 +42,9 @@ def image_search(query: str) ->str:
     }
     response = requests.get(url, params=params)
     data = response.json()["items"]
-    # results = []
-    # for item in data:
-    #     results.append(f"<img src='{item['link']}' alt='{item['title']}' class='rounded h-[300px] w-[300px] mt-3' />")
-    # return results
     res = ""
     for item in data:
-        res += f"<img src='{item['link']}' alt='{item['title']}' class='rounded mt-3 h-[300px] w-[300px]' />"
-    res += f"\n\nRemember to return images in html img tags for displaying in the chat example ```<img src='url' alt='title' class='rounded mt-3 h-[300px] w-[300px]' />```"
+        res += f"URL: {item['link']}\n\nTitle: {item['title']}\n\n"
     return res
 
 def email_sender(email: str, subject: str, message: str) -> str:

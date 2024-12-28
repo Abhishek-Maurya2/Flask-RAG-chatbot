@@ -277,12 +277,23 @@ def chat():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/clear-history")
+@app.route("/delete", methods=["DELETE"])
 def clear_history():
-    conversations.clear()
-    return jsonify({"message": "History cleared"})
+    try:
+        conversations.clear()
+        return jsonify({"message": "History cleared"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-@app.route("/list-history")
+@app.route("/delete/<conversation_id>", methods=["DELETE"])
+def delete_conversation(conversation_id):
+    try:
+        conversations.pop(conversation_id)
+        return jsonify({"message": "Conversation deleted"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/history")
 def list_history():
     history = jsonify(conversations)
     # print("\n\nHistory: ")

@@ -4,7 +4,7 @@ import axios from "axios";
 import useMessageStore from "@/store/useMessageStore";
 import useThemeStore from "@/store/useThemeStore";
 import { Button } from "./ui/button";
-import { ClipboardPlus } from "lucide-react";
+import { ClipboardPlus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 function SidebarComponent() {
@@ -26,7 +26,7 @@ function SidebarComponent() {
   };
   const getHistory = async () => {
     try {
-      const url = `${import.meta.env.VITE_URL}/list-history`;
+      const url = `${import.meta.env.VITE_URL}/history`;
       const response = await axios.get(url);
       setHistory(response.data);
       // console.log(response.data);
@@ -39,17 +39,28 @@ function SidebarComponent() {
     setConversationId(data.conversation_id);
     loadMessage(data.messages);
   };
+  const handleDelete = async (id) => {
+    try {
+      await axios
+        .delete(`${import.meta.env.VITE_URL}/delete/${id}`)
+        .then(() => {
+          toast("Chat Deleted", "success");
+          getHistory();
+        });
+    } catch (error) {
+      toast.error("Failed to delete chat", "error");
+      console.error(error);
+    }
+  };
   const handleNewChat = async () => {
     setConversationId(Date.now().toString());
     clearMessages();
   };
   const ClearHistory = async () => {
     try {
-      const response = await axios
-        .get(`${import.meta.env.VITE_URL}/clear-history`)
-        .then(() => {
-          setHistory([]);
-        });
+      await axios.delete(`${import.meta.env.VITE_URL}/delete`).then(() => {
+        setHistory([]);
+      });
     } catch (error) {
       console.error(error);
     }
@@ -60,9 +71,7 @@ function SidebarComponent() {
       const form = new FormData();
       form.append("system_prompt", systemMessage);
       const response = await axios
-        .post(`${import.meta.env.VITE_URL}/set-system-prompt`,
-          form
-        )
+        .post(`${import.meta.env.VITE_URL}/set-system-prompt`, form)
         .then(() => {
           setSystemPrompt(false);
           toast("System Prompt Updated", "success");
@@ -97,25 +106,26 @@ function SidebarComponent() {
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <div className="flex flex-col gap-2 h-[63vh] overflow-auto">
+        <div className="flex flex-col gap-2 h-[63vh] overflow-hidden">
           {/* history is not a array */}
           {history
             .slice()
             .reverse()
             .map((item, index) => (
-              <div key={index} className="flex flex-row justify-between">
+              <div key={index} className="flex flex-row justify-between gap-1">
                 <Button
                   onClick={() => loadChatHistory(item)}
-                  className="w-full items-center justify-start px-2"
                   variant="ghost"
+                  className="w-full flex flex-col items-start ps-2 truncate"
                 >
-                  <p
-                    className="
-                  truncate
-                  "
-                  >
-                    {item.messages[1].content}
-                  </p>
+                  {item.messages[1].content}
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => handleDelete(item.conversation_id)}
+                >
+                  <Trash2 />
                 </Button>
               </div>
             ))}

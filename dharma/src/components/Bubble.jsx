@@ -17,7 +17,7 @@ const processBlocks = (block, index) => {
   }
   return (
     <div key={index}>
-      <div className="flex items-center justify-between border rounded-t-2xl overflow-hidden px-2 bg-black text-white">
+      <div className="mt-1 flex items-center justify-between border rounded-t-2xl overflow-hidden px-2 bg-black text-white">
         <p>{language}</p>
         <Button
           size="icon"
@@ -43,8 +43,6 @@ const processBlocks = (block, index) => {
 };
 
 const textFormatter = (text) => {
-  // console.log(text);
-  // Handle code blocks (```)
   const codeBlockRegex = /```(.*?)```/gs;
   const parts = text.split(codeBlockRegex);
 
@@ -72,6 +70,10 @@ const textFormatter = (text) => {
       part = part.replace(/\n/g, "<br />");
       // Underline (__)
       part = part.replace(/__(.*?)__/g, "<u>$1</u>");
+      // Strikethrough (~~)
+      part = part.replace(/~~(.*?)~~/g, "<del>$1</del>");
+      // Inline code (`)
+      part = part.replace(/`(.*?)`/g, "<code class='bg-black rounded p-0.5 mx-1'>$1</code>");
       return <span key={index} dangerouslySetInnerHTML={{ __html: part }} />;
     }
   });

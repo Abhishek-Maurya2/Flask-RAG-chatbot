@@ -75,5 +75,5 @@ def main(question):
         responses += f"Source: [{link['title']}]({link['link']})\nResponse: {response}\n\n"
         count += 1
     
-    answer = getResponse(responses, f"Answer my question in detail and also mention the sources at the end. Question:  {question}")
+    answer = getResponse(responses, f"Answer my question in detail and also mention the sources at the end in the format[Title](URL). Question:  {question}")
     return answer

@@ -222,6 +222,8 @@ def get_bot_response(user_query, conversation_id):
                     function_args = json.loads(tool_call.function.arguments)
                     news_summary = newsFinder(function_args["query"])
                     
+                    print("News Summary: ", news_summary)
+                    
                     conversations[conversation_id].append({
                         "tool_call_id": tool_call.id,
                         "role": "tool",

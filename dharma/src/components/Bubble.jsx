@@ -60,11 +60,6 @@ const textFormatter = (text) => {
         /\[(.*?)\]\((http[s]?:\/\/[^\s]+)\)/g,
         '<a href="$2" class="text-blue-500 hover:underline">$1</a>'
       );
-      // url
-      part = part.replace(
-        /(http[s]?:\/\/[^\s]+)/g,
-        '<a href="$1" class="text-blue-500 hover:underline">$1</a>'
-      )
 
       // Bold-Italic (**_)
       part = part.replace(/\*\*(.*?)_.*?\*\*/g, "<strong><em>$1</em></strong>");

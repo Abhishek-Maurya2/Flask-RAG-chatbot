@@ -3,10 +3,9 @@ import io
 import qrcode
 import requests
 from bs4 import BeautifulSoup
-from typing import List, Dict
-from urllib.parse import quote_plus
 import os
 from dotenv import load_dotenv
+from news import main
 
 load_dotenv()
 
@@ -46,11 +45,6 @@ def image_search(query: str) ->str:
     for item in data:
         res += f"URL: {item['link']}\n\nTitle: {item['title']}\n\n"
     return res
-
-def email_sender(email: str, subject: str, message: str) -> str:
-    """Send an email with the given subject and message"""
-    
-    return f"Email sent to {email} with subject '{subject}' and message '{message}'"
 
 def search_wikipedia_for_extra_information(query: str) -> str:
     """"search wikipedia for the query and return the texts on the webpage"""
@@ -109,3 +103,9 @@ def web_search(query: str) -> str:
         output += f"URL: {item['link']}\n\n"
         output += f"Description: {item['snippet']}\n\n"
     return output
+
+def newsFinder(query: str) -> str:
+    try:
+        return main(query)
+    except Exception as e:
+        return f"Error: {str(e)}"

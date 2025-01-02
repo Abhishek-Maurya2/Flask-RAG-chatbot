@@ -60,6 +60,12 @@ const textFormatter = (text) => {
         /\[(.*?)\]\((http[s]?:\/\/[^\s]+)\)/g,
         '<a href="$2" class="text-blue-500 hover:underline">$1</a>'
       );
+      // url
+      part = part.replace(
+        /(http[s]?:\/\/[^\s]+)/g,
+        '<a href="$1" class="text-blue-500 hover:underline">$1</a>'
+      )
+
       // Bold-Italic (**_)
       part = part.replace(/\*\*(.*?)_.*?\*\*/g, "<strong><em>$1</em></strong>");
       // Bold (**)
@@ -73,7 +79,10 @@ const textFormatter = (text) => {
       // Strikethrough (~~)
       part = part.replace(/~~(.*?)~~/g, "<del>$1</del>");
       // Inline code (`)
-      part = part.replace(/`(.*?)`/g, "<code class='bg-black rounded p-0.5 mx-1'>$1</code>");
+      part = part.replace(
+        /`(.*?)`/g,
+        "<code class='bg-black rounded p-0.5 mx-1'>$1</code>"
+      );
       return <span key={index} dangerouslySetInnerHTML={{ __html: part }} />;
     }
   });
@@ -115,33 +124,20 @@ const Bubbles = ({ message }) => {
   };
 
   return (
-    <div
-      className={`flex flex-row px-2 ${
-        message.role === "assistant" ? "justify-start" : "justify-end"
-      }`}
-    >
-      <div
-        className={`
-      flex gap-2 ${
-        message.role === "assistant"
-          ? "items-start flex-row"
-          : "items-end flex-row-reverse"
-      }
-        `}
-      >
-        <div
-          className={`h-4 w-4 rounded-full
-            ${
-              message.role === "assistant"
-                ? "bg-gradient-to-br from-blue-500 to-red-500"
-                : "bg-gradient-to-br from-blue-500"
-            }
-        
-        `}
-        ></div>
-        {/* {message.content} */}
-        <div className="flex flex-col gap-1 items-start">
-          {message.role == "assistant" ? (
+    <>
+      {message.role === "user" && (
+        <div className="flex justify-end items-end gap-2 m-2">
+          <div className="rounded-lg p-2 bg-blue-500 max-w-[50%] text-white break-words">
+            {userFormattedText(message.content)}
+          </div>
+          <div className="h-4 w-4 bg-red-500 rounded-full"></div>
+        </div>
+      )}
+      {/* assistant */}
+      {message.role === "assistant" && (
+        <div className="flex flex-col items-start gap-2">
+          <div className="flex flex-row gap-2 ms-2">
+            <div className="h-4 w-4 bg-green-200 rounded-full"></div>
             <div
               className={`p-2 rounded-lg max-w-[90vw] sm:max-w-[500px] border text-sm ${
                 theme == "dark" ? "bg-[#18181b]" : "bg-[#fafafa]"
@@ -149,72 +145,65 @@ const Bubbles = ({ message }) => {
             >
               {textFormatter(message.content)}
             </div>
-          ) : (
-            <div
-              className={`p-2 rounded-lg max-w-[90vw] sm:max-w-[500px] bg-blue-500 text-sm`}
+          </div>
+
+          <div className="border rounded-xl ms-8">
+            <Button
+              size="icon"
+              variant="outline"
+              className="border-0"
+              onClick={() => handleSpeak(message.content)}
             >
-              {userFormattedText(message.content)}
-            </div>
-          )}
-          {message.role == "assistant" && (
-            <div className="border rounded-lg">
-              <Button
-                size="icon"
-                variant="outline"
-                className="border-0"
-                onClick={() => handleSpeak(message.content)}
-              >
-                <Volume2 />
-              </Button>
-              <Button
-                size="icon"
-                variant="outline"
-                className="border-0"
-                onClick={() => {
-                  navigator.clipboard.writeText(message.content);
-                  toast.success("Copied to clipboard");
-                }}
-              >
-                <Copy />
-              </Button>
-              <Button
-                size="icon"
-                variant="outline"
-                className="border-0"
-                onClick={() => {
-                  navigator.share({
-                    title: "Dharma Ai",
-                    text: message.content,
-                  });
-                }}
-              >
-                <Share2Icon />
-              </Button>
-              <Button
-                size="icon"
-                variant="outline"
-                className="border-0"
-                onClick={() => {
-                  toast.success("Thanks for the feedback");
-                }}
-              >
-                <ThumbsUp />
-              </Button>
-              <Button
-                size="icon"
-                variant="outline"
-                className="border-0"
-                onClick={() => {
-                  toast.error("Thanks for the feedback");
-                }}
-              >
-                <ThumbsDown />
-              </Button>
-            </div>
-          )}
+              <Volume2 />
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              className="border-0"
+              onClick={() => {
+                navigator.clipboard.writeText(message.content);
+                toast.success("Copied to clipboard");
+              }}
+            >
+              <Copy />
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              className="border-0"
+              onClick={() => {
+                navigator.share({
+                  title: "Dharma Ai",
+                  text: message.content,
+                });
+              }}
+            >
+              <Share2Icon />
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              className="border-0"
+              onClick={() => {
+                toast.success("Thanks for the feedback");
+              }}
+            >
+              <ThumbsUp />
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              className="border-0"
+              onClick={() => {
+                toast.error("Thanks for the feedback");
+              }}
+            >
+              <ThumbsDown />
+            </Button>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 

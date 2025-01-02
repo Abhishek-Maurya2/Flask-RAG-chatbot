@@ -4,7 +4,7 @@ import os
 import json
 from dotenv import load_dotenv
 from flask_cors import CORS
-from tools import generate_qr_code, web_search, search_wikipedia_for_extra_information, image_search, read_website
+from tools import generate_qr_code, web_search, search_wikipedia_for_extra_information, image_search, read_website, newsFinder
 
 load_dotenv()
 app = Flask(__name__)
@@ -101,6 +101,23 @@ tools = [
                     "required": ["url"]
                 }
             }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "newsFinder",
+                "description" : "Search the internet for news and answer the question",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The search query for news"
+                        }
+                    },
+                    "required": ["query"]
+                }
+            }
         }
     ]
     
@@ -140,8 +157,6 @@ def get_bot_response(user_query, conversation_id):
 
         if tool_calls:
             qr_base64 = None
-            image_results = None
-            web_results = None
             for tool_call in tool_calls:
                 if tool_call.function.name == "generate_qr_code":
                     function_args = json.loads(tool_call.function.arguments)
@@ -202,11 +217,22 @@ def get_bot_response(user_query, conversation_id):
                         "name": "read_website",
                         "content": web_summary
                     })
+                
+                elif tool_call.function.name == "newsFinder":
+                    function_args = json.loads(tool_call.function.arguments)
+                    news_summary = newsFinder(function_args["query"])
+                    
+                    conversations[conversation_id].append({
+                        "tool_call_id": tool_call.id,
+                        "role": "tool",
+                        "name": "newsFinder",
+                        "content": news_summary
+                    })
                     
             # Get final response
             second_response = client.chat.completions.create(
                 messages=conversations[conversation_id],
-                model="llama3-groq-70b-8192-tool-use-preview"
+                model="llama-3.3-70b-versatile",
             )
             
             bot_message = second_response.choices[0].message.content

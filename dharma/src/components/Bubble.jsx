@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { coldarkDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { marked, Marked } from "marked";
 
 const processBlocks = (block, index) => {
   const lines = block.split("\n");
@@ -51,45 +52,122 @@ const textFormatter = (text) => {
     if (index % 2 === 1) {
       return processBlocks(part, index);
     } else {
-      // Image ![alt](url)
+      // return (
+      //   <span
+      //     key={index}
+      //     className="
+      //     flex flex-col gap-3
+      //     "
+      //     dangerouslySetInnerHTML={{ __html: marked(part) }}
+      //   />
+      // );
+
+      // Convert inline code (`code`)
+      part = part.replace(/`(.+?)`/g, "<code>$1</code>");
+
+      // Convert headings (H1-H6)
+      part = part.replace(/^###### (.+)$/gm, "<h6>$1</h6>");
+      part = part.replace(/^##### (.+)$/gm, "<h5>$1</h5>");
+      part = part.replace(/^#### (.+)$/gm, "<h4>$1</h4>");
+      part = part.replace(/^### (.+)$/gm, "<h3>$1</h3>");
+      part = part.replace(/^## (.+)$/gm, "<h2>$1</h2>");
+      part = part.replace(/^# (.+)$/gm, "<h1>$1</h1>");
+
+      // Convert images ![alt](url)
+      part = part.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" />');
+
+      // Convert links [text](url)
       part = part.replace(
-        /!\[(.*?)\]\((http[s]?:\/\/[^\s]+)\)/g,
-        '<img src="$2" alt="$1" class="rounded h-[300px] w-[300px]" />'
-      );
-      // URL [text](url)
-      part = part.replace(
-        /\[(.*?)\]\((http[s]?:\/\/[^\s]+)\)/g,
-        '<a href="$2" class="text-blue-500 hover:underline">$1</a>'
+        /\[(.+?)\]\((.+?)\)/g,
+        '<a href="$2" target="_blank">$1</a>'
       );
 
-      // Bold-Italic (**_)
-      part = part.replace(/\*\*(.*?)_.*?\*\*/g, "<strong><em>$1</em></strong>");
-      // Bold (**)
-      part = part.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-      // Italic (*)
-      part = part.replace(/\*(.*?)\*/g, "<em>$1</em>");
-      // Line break (*)
-      part = part.replace(/\n/g, "<br />");
-      // Underline (__)
-      part = part.replace(/__(.*?)__/g, "<u>$1</u>");
-      // Strikethrough (~~)
-      part = part.replace(/~~(.*?)~~/g, "<del>$1</del>");
-      // Inline code (`)
-      part = part.replace(
-        /`(.*?)`/g,
-        "<code class='bg-gray-800 rounded p-0.5 mx-1 text-white px-2'>$1</code>"
-      );
-      // #### Heading
-      part = part.replace(/#### (.*?)/g, "<h3>$1</h3>");
-      // ### Heading
-      part = part.replace(/### (.*?)/g, "<h2>$1</h2>");
-      // ## Heading
-      part = part.replace(/## (.*?)/g, "<h1>$1</h1>");
-      // # Heading
-      part = part.replace(/# (.*?)/g, "<h1>$1</h1>");
-      // > Blockquote
-      part = part.replace(/^> (.*?)/gm, "<blockquote>$1</blockquote>");
-      return <span key={index} dangerouslySetInnerHTML={{ __html: part }} />;
+      // Convert bold (**text** or __text__)
+      part = part.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      part = part.replace(/__(.+?)__/g, "<strong>$1</strong>");
+
+      // Convert italic (*text* or _text_)
+      part = part.replace(/\*(.+?)\*/g, "<em>$1</em>");
+      part = part.replace(/_(.+?)_/g, "<em>$1</em>");
+
+      // Convert ordered lists (1. text)
+      part = part.replace(/^\s*\d+\.\s(.+)$/gm, "<li>$1</li>");
+      part = part.replace(/(<li>.*<\/li>)/gm, "<ol>$1</ol>");
+      part = part.replace(/<\/ol>\s*<ol>/g, ""); // Merge adjacent <ol> tags
+
+      // Handle unordered lists (-, *, +) and sub-lists
+      let ulRegex = /^\s*([-\*\+])\s+(.+)$/gm;
+      part = part.replace(ulRegex, (match, symbol, content, offset, string) => {
+        const depth = match.match(/^\s*/)[0].length / 2; // Assuming 2 spaces per indentation level
+        const listType = symbol === "+" ? "ul" : "ul"; // Assuming + as unordered list marker
+        const nestedList =
+          "<ul>".repeat(depth) + `<li>${content}</li>` + "</ul>".repeat(depth);
+        return nestedList;
+      });
+
+      // Convert blockquotes (> text)
+      part = part.replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>");
+
+      // Match entire table structure
+      const tableRegex =
+        /^\s*\|(.+?)\|\s*$(?:\r?\n\s*\|[-:\s]+?\|\s*$)?(?:\r?\n\s*\|.+?\|\s*$)*/gm;
+
+      // Process the table
+      part = part.replace(tableRegex, (match) => {
+        const rows = match.trim().split("\n");
+        const [header, separator, ...bodyRows] = rows;
+
+        // Get alignment from separator row
+        const alignments = separator
+          .split("|")
+          .filter(Boolean)
+          .map((cell) => {
+            if (cell.startsWith(":") && cell.endsWith(":")) return "center";
+            if (cell.endsWith(":")) return "right";
+            return "left";
+          });
+
+        // Process header
+        const headerHTML = processRow(header, true, alignments);
+
+        // Process body
+        const bodyHTML = bodyRows
+          .map((row) => processRow(row, false, alignments))
+          .join("");
+
+        return `
+    <table class="w-full text-sm text-center rounded-xl overflow-hidden shadow-md">
+      <thead class="text-xs text-gray-700 uppercase bg-[#d5d4d4] dark:bg-gray-700 dark:text-gray-400">
+        ${headerHTML}
+      </thead>
+      <tbody>
+        ${bodyHTML}
+      </tbody>
+    </table>`;
+
+        function processRow(row, isHeader, alignments) {
+          const cells = row.split("|").filter(Boolean);
+          const tag = isHeader ? "th" : "td";
+          const rowClass = isHeader ? "" : "";
+
+          return `<tr class="${rowClass}">${cells
+            .map((cell, i) => {
+              const align = alignments[i];
+              const cellClass = isHeader
+                ? "py-4 font-medium text-gray-900 dark:text-white border"
+                : "py-4 font-medium text-gray-900 dark:text-white border";
+              return `<${tag} ${
+                isHeader ? 'scope="col"' : ""
+              } class="${cellClass}">${cell.trim()}</${tag}>`;
+            })
+            .join("")}</tr>`;
+        }
+      });
+
+      // Convert line breaks
+      part = part.replace(/\n/g, "<br>");
+
+      return <div key={index} dangerouslySetInnerHTML={{ __html: part }}></div>;
     }
   });
 };

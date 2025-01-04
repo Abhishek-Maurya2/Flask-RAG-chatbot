@@ -1,4 +1,4 @@
-import { ArrowUp, Image, Paperclip } from "lucide-react";
+import { ArrowUp, File, LoaderCircle, Paperclip } from "lucide-react";
 import React, { useRef, useEffect, useState } from "react";
 import axios from "axios";
 import useMessageStore from "@/store/useMessageStore";
@@ -9,7 +9,6 @@ import { SidebarTrigger } from "./ui/sidebar";
 import { Separator } from "./ui/separator";
 import useThemeStore from "@/store/useThemeStore";
 import Bubbles from "./Bubble";
-
 
 function SkeletonDemo() {
   return (
@@ -40,12 +39,12 @@ function ChatSection() {
   const getContext = async (query) => {
     if (query === "") return "";
     if (!file) return "";
+    const formData = new FormData();
+    formData.append("query", query);
     try {
-      const response = await axios.get(
+      const response = await axios.post(
         `${import.meta.env.VITE_RAG_URL}/retrieve`,
-        {
-          params: { query: query },
-        }
+        formData
       );
       console.log(response.data.context);
       let context = "";
@@ -114,14 +113,24 @@ function ChatSection() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState({
+    file: null,
+    loading: false,
+  });
   const handleRAG = async () => {
     // open file dialog
     const input = document.createElement("input");
     input.type = "file";
     input.onchange = async (e) => {
       const selectedFile = e.target.files[0];
-      setFile(selectedFile);
+      setFile(
+        selectedFile
+          ? {
+              file: selectedFile,
+              loading: true,
+            }
+          : { file: null, loading: false }
+      );
       const formData = new FormData();
       formData.append("file", selectedFile);
 
@@ -131,8 +140,10 @@ function ChatSection() {
           formData
         );
         toast.success(response.data.message);
+        setFile({ file: selectedFile, loading: false });
       } catch (error) {
         toast.error(error.message);
+        setFile({ file: null, loading: false });
       }
     };
     input.click();
@@ -196,21 +207,19 @@ function ChatSection() {
             theme == "dark" ? "bg-[#18181b]" : "bg-[#fafafa]"
           } flex flex-col rounded-3xl overflow-hidden border-2 px-2 w-[90vw] sm:w-[600px]`}
         >
-          {file && (
+          {file.file && (
             <div className="flex flex-row items-center gap-2">
               <div className="bg-red-500 h-12 w-12 rounded-lg mt-3 flex items-center justify-center">
-                {
-                  {
-                    "image/png": <Image />,
-                    "image/jpeg": <Image />,
-                    "image/jpg": <Image />,
-                    "application/pdf": <p>PDF</p>,
-                    "application/msword": <p>DOC</p>,
-                    "application/xlsx": <p>XLS</p>,
-                    "application/pptx": <p>PPT</p>,
-                    "application/csv": <p>CSV</p>,
-                  }[file?.type]
-                }
+                {file.loading ? (<LoaderCircle
+                  className="
+                  animate-spin
+                  text-white
+                  h-8
+                  w-8
+                "
+                />):(
+                  <File className="text-white h-8 w-8" />
+                )}
               </div>
               <p>
                 {file?.name} -{" "}

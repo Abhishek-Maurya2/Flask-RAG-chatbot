@@ -1,4 +1,4 @@
-import { ArrowUp, File, LoaderCircle, Paperclip } from "lucide-react";
+import { ArrowUp, File, LoaderCircle, Paperclip, X } from "lucide-react";
 import React, { useRef, useEffect, useState } from "react";
 import axios from "axios";
 import useMessageStore from "@/store/useMessageStore";
@@ -208,23 +208,41 @@ function ChatSection() {
           } flex flex-col rounded-3xl overflow-hidden border-2 px-2 w-[90vw] sm:w-[600px]`}
         >
           {file.file && (
-            <div className="flex flex-row items-center gap-2">
-              <div className="bg-red-500 h-12 w-12 rounded-lg mt-3 flex items-center justify-center">
-                {file.loading ? (<LoaderCircle
-                  className="
+            <div className="flex flex-row items-center justify-between gap-2">
+              <div className="flex flex-row items-center gap-2">
+                <div className="bg-red-500 h-12 w-12 rounded-lg mt-3 flex items-center justify-center">
+                  {file.loading ? (
+                    <LoaderCircle
+                      className="
                   animate-spin
                   text-white
                   h-8
                   w-8
                 "
-                />):(
-                  <File className="text-white h-8 w-8" />
-                )}
+                    />
+                  ) : (
+                    <File className="text-white h-8 w-8" />
+                  )}
+                </div>
+                <p>
+                  {file.file?.name} -{" "}
+                  {file.file?.size && (file.file.size / 1024 / 1024).toFixed(1)}{" "}
+                  MB
+                </p>
               </div>
-              <p>
-                {file?.name} -{" "}
-                {file?.size && (file.size / 1024 / 1024).toFixed(1)} MB
-              </p>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hover:danger"
+                onClick={() =>
+                  setFile({
+                    file: null,
+                    loading: false,
+                  })
+                }
+              >
+                <X />
+              </Button>
             </div>
           )}
           <div className="flex flex-row items-center flex-1">

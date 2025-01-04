@@ -61,6 +61,7 @@ function SidebarComponent() {
       await axios.delete(`${import.meta.env.VITE_URL}/delete`).then(() => {
         setHistory([]);
       });
+      handleNewChat();
     } catch (error) {
       console.error(error);
     }
@@ -132,7 +133,12 @@ function SidebarComponent() {
         </div>
       )}
       <div className="flex flex-col gap-2 justify-between">
-        <Button onClick={() => ClearHistory()}>Delete History</Button>
+        <Button
+          className="hover:border hover:text-red-500 hover:bg-[#f35c5c11] border-red-500"
+          onClick={() => ClearHistory()}
+        >
+          Delete History
+        </Button>
         <div className="flex gap-1">
           <ThemeToggleButton />
           <Button

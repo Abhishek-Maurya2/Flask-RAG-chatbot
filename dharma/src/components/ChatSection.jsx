@@ -66,8 +66,8 @@ function ChatSection() {
     const formData = new FormData();
     formData.append("conversation_id", conversationId);
 
-    const context = await getContext(msg);
-    if (context !== "") {
+    if (file.file) {
+      const context = await getContext(msg);
       formData.append("message", msg + "\n\nContext: " + context);
     } else {
       formData.append("message", msg);

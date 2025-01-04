@@ -43,6 +43,7 @@ const processBlocks = (block, index) => {
 };
 
 const textFormatter = (text) => {
+  console.log(text);
   const codeBlockRegex = /```(.*?)```/gs;
   const parts = text.split(codeBlockRegex);
 
@@ -76,8 +77,18 @@ const textFormatter = (text) => {
       // Inline code (`)
       part = part.replace(
         /`(.*?)`/g,
-        "<code class='bg-black rounded p-0.5 mx-1'>$1</code>"
+        "<code class='bg-gray-800 rounded p-0.5 mx-1 text-white px-2'>$1</code>"
       );
+      // #### Heading
+      part = part.replace(/#### (.*?)/g, "<h3>$1</h3>");
+      // ### Heading
+      part = part.replace(/### (.*?)/g, "<h2>$1</h2>");
+      // ## Heading
+      part = part.replace(/## (.*?)/g, "<h1>$1</h1>");
+      // # Heading
+      part = part.replace(/# (.*?)/g, "<h1>$1</h1>");
+      // > Blockquote
+      part = part.replace(/^> (.*?)/gm, "<blockquote>$1</blockquote>");
       return <span key={index} dangerouslySetInnerHTML={{ __html: part }} />;
     }
   });
@@ -121,80 +132,82 @@ const Bubbles = ({ message }) => {
   return (
     <>
       {message.role === "user" && (
-        <div className="flex justify-end items-end gap-2 m-2">
-          <div className="rounded-lg p-2 bg-blue-500 max-w-[50%] text-white break-words">
+        <div className="flex justify-end items-end mx-4 sm:mx-[5vw] my-2">
+          <div
+            className={`rounded-full px-4 py-2 ${
+              theme === "dark" ? "bg-[#1f1f1f]" : "bg-[#d5d4d4]"
+            }`}
+          >
             {userFormattedText(message.content)}
           </div>
-          <div className="h-4 w-4 bg-red-500 rounded-full"></div>
+          {/* <div className="h-4 w-4 bg-red-500 rounded-full"></div> */}
         </div>
       )}
       {/* assistant */}
       {message.role === "assistant" && (
-        <div className="flex flex-col items-start gap-2">
-          <div className="flex flex-row gap-2 ms-2">
-            <div className="h-4 w-4 bg-green-200 rounded-full"></div>
-            <div
-              className={`p-2 rounded-lg max-w-[90vw] sm:max-w-[500px] border text-sm ${
-                theme == "dark" ? "bg-[#18181b]" : "bg-[#fafafa]"
-              }`}
-            >
-              {textFormatter(message.content)}
+        <div className="w-full flex items-center justify-center">
+          <div className="flex flex-row gap-4">
+            <div className="bg-amber-500 h-6 w-6 rounded-full"></div>
+            <div className="flex flex-col justify-start w-[80vw] sm:w-[60vw]">
+              <div className="break-words">
+                {textFormatter(message.content)}
+              </div>
+              {/* options */}
+              <div className="flex flex-row mt-2">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="rounded-full"
+                  onClick={() => handleSpeak(message.content)}
+                >
+                  <Volume2 />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="rounded-full"
+                  onClick={() => {
+                    navigator.clipboard.writeText(message.content);
+                    toast.success("Copied to clipboard");
+                  }}
+                >
+                  <Copy />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="rounded-full"
+                  onClick={() => {
+                    navigator.share({
+                      title: "Dharma Ai",
+                      text: message.content,
+                    });
+                  }}
+                >
+                  <Share2Icon />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="rounded-full"
+                  onClick={() => {
+                    toast.success("Thanks for the feedback");
+                  }}
+                >
+                  <ThumbsUp />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="rounded-full"
+                  onClick={() => {
+                    toast.error("Thanks for the feedback");
+                  }}
+                >
+                  <ThumbsDown />
+                </Button>
+              </div>
             </div>
-          </div>
-
-          <div className="border rounded-xl ms-8">
-            <Button
-              size="icon"
-              variant="outline"
-              className="border-0"
-              onClick={() => handleSpeak(message.content)}
-            >
-              <Volume2 />
-            </Button>
-            <Button
-              size="icon"
-              variant="outline"
-              className="border-0"
-              onClick={() => {
-                navigator.clipboard.writeText(message.content);
-                toast.success("Copied to clipboard");
-              }}
-            >
-              <Copy />
-            </Button>
-            <Button
-              size="icon"
-              variant="outline"
-              className="border-0"
-              onClick={() => {
-                navigator.share({
-                  title: "Dharma Ai",
-                  text: message.content,
-                });
-              }}
-            >
-              <Share2Icon />
-            </Button>
-            <Button
-              size="icon"
-              variant="outline"
-              className="border-0"
-              onClick={() => {
-                toast.success("Thanks for the feedback");
-              }}
-            >
-              <ThumbsUp />
-            </Button>
-            <Button
-              size="icon"
-              variant="outline"
-              className="border-0"
-              onClick={() => {
-                toast.error("Thanks for the feedback");
-              }}
-            >
-              <ThumbsDown />
-            </Button>
           </div>
         </div>
       )}

@@ -204,7 +204,7 @@ function ChatSection() {
       <div className="pt-1 flex flex-col gap-1 items-center justify-center">
         <div
           className={`${
-            theme == "dark" ? "bg-[#18181b]" : "bg-[#fafafa]"
+            theme == "dark" ? "bg-[#18181b]" : "bg-[#e6e6e6]"
           } flex flex-col rounded-3xl overflow-hidden border-2 px-2 w-[90vw] sm:w-[600px]`}
         >
           {file.file && (
@@ -249,10 +249,15 @@ function ChatSection() {
             <Button
               size="icon"
               variant="ghost"
-              className="rounded-full -rotate-45"
+              className="rounded-full -rotate-45 "
               onClick={() => handleRAG()}
             >
-              <Paperclip />
+              <Paperclip
+                style={{
+                  width: "18px",
+                  height: "18px",
+                }}
+              />
             </Button>
             <input
               type="text"

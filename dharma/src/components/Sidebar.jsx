@@ -124,9 +124,14 @@ function SidebarComponent() {
                 <Button
                   size="icon"
                   variant="ghost"
+                  className={`${
+                    theme == "dark" ? "hover:danger" : "hover:bg-[#ff9c9ca9] hover:text-red-500"
+                  }`}
                   onClick={() => handleDelete(item.conversation_id)}
                 >
-                  <Trash2 />
+                  <Trash2
+                  style={{width: "17px", height: "17px"}}
+                  />
                 </Button>
               </div>
             ))}

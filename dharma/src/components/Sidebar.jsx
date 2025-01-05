@@ -4,7 +4,7 @@ import axios from "axios";
 import useMessageStore from "@/store/useMessageStore";
 import useThemeStore from "@/store/useThemeStore";
 import { Button } from "./ui/button";
-import { ClipboardPlus, Trash2 } from "lucide-react";
+import { ClipboardPlus, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 function SidebarComponent() {
@@ -100,12 +100,15 @@ function SidebarComponent() {
     pingRAG();
     getSystemPrompt();
   }, []);
+  
   return (
     <div className={`flex flex-col justify-between w-full h-full px-4 py-2`}>
       <Button onClick={() => handleNewChat()}>New Chat</Button>
       <p className="text-xl mt-2">History</p>
       {loading ? (
-        <p>Loading...</p>
+        <div className="flex items-center justify-center h-[63vh]">
+          <Loader2 className="w-8 h-8 animate-spin" />
+        </div>
       ) : (
         <div className="flex flex-col gap-2 h-[63vh] overflow-hidden">
           {/* history is not a array */}
@@ -125,13 +128,13 @@ function SidebarComponent() {
                   size="icon"
                   variant="ghost"
                   className={`${
-                    theme == "dark" ? "hover:danger" : "hover:bg-[#ff9c9ca9] hover:text-red-500"
+                    theme == "dark"
+                      ? "hover:danger"
+                      : "hover:bg-[#ff9c9ca9] hover:text-red-500"
                   }`}
                   onClick={() => handleDelete(item.conversation_id)}
                 >
-                  <Trash2
-                  style={{width: "17px", height: "17px"}}
-                  />
+                  <Trash2 style={{ width: "17px", height: "17px" }} />
                 </Button>
               </div>
             ))}
@@ -165,7 +168,7 @@ function SidebarComponent() {
                 : "rgba(0, 0, 0, 0.5)",
           }}
         >
-          <div className="flex flex-col gap-3 rounded-xl bg-black p-4 w-[80vw] sm:w-[30vw] border">
+          <div className="flex flex-col gap-3 rounded-xl bg-[#fff] p-4 w-[80vw] sm:w-[30vw] border dark:bg-black max-h-[90vh]">
             <p className="text-2xl font-semibold">Customize Prompt</p>
             <p className="text-md">
               What would you like Luna to know about you to provide better

@@ -3,7 +3,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
-  SidebarRail,
 } from "@/components/ui/sidebar";
 import { Circle } from "lucide-react";
 import SidebarComponent from "./Sidebar";
@@ -161,7 +160,6 @@ export function AppSidebar({ ...props }) {
       <SidebarContent>
         <SidebarComponent />
       </SidebarContent>
-      <SidebarRail />
     </Sidebar>
   );
 }

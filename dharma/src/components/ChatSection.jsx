@@ -233,7 +233,7 @@ function ChatSection() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="hover:danger"
+                className="rounded-full hover:bg-[#e8535397]"
                 onClick={() =>
                   setFile({
                     file: null,
@@ -268,7 +268,7 @@ function ChatSection() {
               onKeyPress={(e) => handleKeyPress(e)}
             />
             {sending ? (
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              <LoaderCircle className="animate-spin h-8 w-8" />
             ) : (
               <Button
                 className="rounded-full h-8 w-8"

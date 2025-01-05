@@ -6,8 +6,29 @@ from bs4 import BeautifulSoup
 import os
 from dotenv import load_dotenv
 from news import main
+import json
+import re
 
 load_dotenv()
+
+def parse_tool_response(response: str):
+    print("Response:", response)
+    function_regex = r"<function=(\w+)>(.*?)</function>"
+    match = re.search(function_regex, response)
+    print("Match:", match)
+
+    if match:
+        function_name, args_string = match.groups()
+        try:
+            args = json.loads(args_string)
+            return {
+                "function": function_name,
+                "arguments": args,
+            }
+        except json.JSONDecodeError as error:
+            print(f"Error parsing function arguments: {error}")
+            return None
+    return None
 
 def read_website(url: str) -> str:
     """Read the content of the given website and return the text"""
@@ -57,14 +78,14 @@ def search_wikipedia_for_extra_information(query: str) -> str:
         if search_results:
             page_id = search_results[0].get("pageid")
             page_url = f"https://en.wikipedia.org/w/api.php?action=parse&format=json&pageid={page_id}"
-            print("\n\n", query, "\n\n", page_url, "\n\n")
+            # print("\n\n", query, "\n\n", page_url, "\n\n")
             page_response = requests.get(page_url)
             page_data = page_response.json()
             page_text = page_data.get("parse", {}).get("text", {}).get("*")
             soup = BeautifulSoup(page_text, "html.parser")
             paragraphs = soup.find_all("p")
             texts = "\n\n".join([p.get_text() for p in paragraphs])
-        texts = texts[:1200]
+        texts = texts[:1800]
         return texts
     except Exception as e:
         return f"Error searching Wikipedia: {str(e)}"

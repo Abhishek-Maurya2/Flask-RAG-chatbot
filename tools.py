@@ -11,24 +11,34 @@ import re
 
 load_dotenv()
 
-def parse_tool_response(response: str):
-    print("Response:", response)
-    function_regex = r"<function=(\w+)>(.*?)</function>"
-    match = re.search(function_regex, response)
-    print("Match:", match)
-
-    if match:
-        function_name, args_string = match.groups()
-        try:
-            args = json.loads(args_string)
-            return {
-                "function": function_name,
-                "arguments": args,
+# <function=newsFinder{"query": "HMPV virus in India"}</function>
+def parse_tool_calls(response: str):
+    try:
+        pattern = r'<function=(.*?){(.*?)</function>'
+        pattern2 = r'<function=(.*?) {(.*?) </function>'
+        matches = re.findall(pattern, response)
+        if not matches:
+            matches = re.findall(pattern2, response)
+        name = matches[0][0]
+        params = "{" + matches[0][1]
+        # random id
+        id = "call_5t3r"
+        res = []
+        res.append({
+            "id": id,
+            "type": "function",
+            "function": {
+                "name": name,
+                "arguments": json.loads(params)
             }
-        except json.JSONDecodeError as error:
-            print(f"Error parsing function arguments: {error}")
-            return None
-    return None
+        })
+        return res
+    except Exception as e:
+        print(response)
+        print(f"Error parsing tool calls: {str(e)}")
+        return None
+    
+
 
 def read_website(url: str) -> str:
     """Read the content of the given website and return the text"""

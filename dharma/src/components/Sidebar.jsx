@@ -103,7 +103,7 @@ function SidebarComponent() {
   
   return (
     <div className={`flex flex-col justify-between w-full h-full px-4 py-2`}>
-      <Button onClick={() => handleNewChat()}>New Chat</Button>
+      <Button onClick={() => handleNewChat()} className="rounded-3xl">New Chat</Button>
       <p className="text-xl mt-2">History</p>
       {loading ? (
         <div className="flex items-center justify-center h-[63vh]">
@@ -116,7 +116,7 @@ function SidebarComponent() {
             .slice()
             .reverse()
             .map((item, index) => (
-              <div key={index} className="flex flex-row justify-between gap-1">
+              <div key={index} className="flex gap-2 items-center">
                 <Button
                   onClick={() => loadChatHistory(item)}
                   variant="ghost"
@@ -131,7 +131,7 @@ function SidebarComponent() {
                     theme == "dark"
                       ? "hover:danger"
                       : "hover:bg-[#ff9c9ca9] hover:text-red-500"
-                  }`}
+                  } rounded-full`}
                   onClick={() => handleDelete(item.conversation_id)}
                 >
                   <Trash2 style={{ width: "17px", height: "17px" }} />
@@ -142,16 +142,17 @@ function SidebarComponent() {
       )}
       <div className="flex flex-col gap-2 justify-between">
         <Button
-          className="hover:border hover:text-red-500 hover:bg-[#f35c5c11] border-red-500"
+          className="hover:border hover:text-red-500 hover:bg-[#f35c5c11] border-red-500 rounded-3xl"
           onClick={() => ClearHistory()}
         >
           Delete History
         </Button>
-        <div className="flex gap-1">
+        <div className="flex gap-1 mb-2">
           <ThemeToggleButton />
           <Button
             variant="outline"
             size="icon"
+            className="rounded-full"
             onClick={() => setSystemPrompt(!systemPrompt)}
           >
             <ClipboardPlus />

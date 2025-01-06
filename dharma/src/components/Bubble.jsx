@@ -58,30 +58,66 @@ const textFormatter = (text) => {
     if (index % 2 === 1) {
       return processBlocks(part, index);
     } else {
-      // Images (e.g. ![alt](src))
+      // Combined link and image handler
       part = part.replace(
-        /!\[(.*?)\]\((.*?)\)/g,
-        '<img src="$2" alt="$1" class="w-[300px] h-[300px] object-cover rounded-xl">'
-      );
+        // Match both markdown and direct URLs
+        /(!\[(.*?)\]\((.*?)\)|(\[(.*?)\]\((.*?)\))|((https?|ftp):\/\/[^\s/$.?#].[^\s]*))/g,
+        (
+          match,
+          _full,
+          imgAlt,
+          imgSrc,
+          _linkFull,
+          linkText,
+          linkHref,
+          directUrl
+        ) => {
+          // Handle markdown images
+          if (imgSrc) {
+            return `<img src="${imgSrc}" alt="${imgAlt}" class="w-[300px] h-[300px] object-cover rounded-xl">`;
+          }
 
-      // Links (e.g. [text](href))
-      part = part.replace(
-        /\[(.*?)\]\((.*?)\)/g,
-        '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">$1</a>'
-      );
+          // Handle markdown links
+          if (linkHref) {
+            return `<a href="${linkHref}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">${linkText}</a>`;
+          }
 
-      // urls (e.g. https://example.com)
-      part = part.replace(/((https?|ftp):\/\/[^\s/$.?#].[^\s]*)/g, (match) => {
-        if (
-          match.includes(".jpg") ||
-          match.includes(".png") ||
-          match.includes(".jpeg") ||
-          match.includes(".gif")
-        ) {
-          return `<img src="${match}" alt="image" class="w-[300px] h-[300px] object-cover rounded-xl">`;
+          // Handle direct URLs
+          if (directUrl) {
+            const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(directUrl);
+            return isImage
+              ? `<img src="${directUrl}" alt="image" class="w-[300px] h-[300px] object-cover rounded-xl">`
+              : `<a href="${directUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">${directUrl}</a>`;
+          }
+
+          return match; // Return unchanged if no match
         }
-        return `<a href="${match}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">${match}</a>`;
-      });
+      );
+
+      // // Images (e.g. ![alt](src))
+      // part = part.replace(
+      //   /!\[(.*?)\]\((.*?)\)/g,
+      //   '<img src="$2" alt="$1" class="w-[300px] h-[300px] object-cover rounded-xl">'
+      // );
+
+      // // Links (e.g. [text](href))
+      // part = part.replace(
+      //   /\[(.*?)\]\((.*?)\)/g,
+      //   '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">$1</a>'
+      // );
+
+      // // // urls (e.g. https://example.com)
+      // // part = part.replace(/((https?|ftp):\/\/[^\s/$.?#].[^\s]*)/g, (match) => {
+      // //   if (
+      // //     match.includes(".jpg") ||
+      // //     match.includes(".png") ||
+      // //     match.includes(".jpeg") ||
+      // //     match.includes(".gif")
+      // //   ) {
+      // //     return `<img src="${match}" alt="image" class="w-[300px] h-[300px] object-cover rounded-xl">`;
+      // //   }
+      // //   return `<a href="${match}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">${match}</a>`;
+      // // });
 
       // Tool used "<?THIS_MESSAGE_WAS_RESULT_OF_TOOL_USE_AND_NOT_TO_BE_COPIED?>"
       part = part.replace(
@@ -228,11 +264,11 @@ const Bubbles = ({ message }) => {
   return (
     <>
       {message.role === "user" && (
-        <div className="flex justify-end items-end mx-4 sm:mx-[5vw] my-2">
+        <div className="flex justify-end items-end mx-4 w-[90vw] md:w-[70vw] my-2">
           <div
-            className={`rounded-full px-4 py-2 ${
+            className={`rounded-3xl px-5 py-2.5 ${
               theme === "dark" ? "bg-[#1f1f1f]" : "bg-[#d5d4d4]"
-            }`}
+            } max-w-[70vw] sm:max-w-[50vw] break-words`}
           >
             {userFormattedText(message.content)}
           </div>
@@ -244,7 +280,7 @@ const Bubbles = ({ message }) => {
         <div className="w-full flex items-center justify-center">
           <div className="flex flex-row gap-4">
             <div className="bg-amber-500 h-6 w-6 rounded-full"></div>
-            <div className="flex flex-col justify-start w-[80vw] sm:w-[60vw]">
+            <div className="flex flex-col justify-start w-[80vw] md:w-[60vw]">
               <div className="break-words">
                 {textFormatter(message.content)}
               </div>

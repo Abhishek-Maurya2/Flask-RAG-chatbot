@@ -16,7 +16,7 @@ const ThemeToggleButton = () => {
   };
 
   return (
-    <Button size="icon" variant="outline" onClick={handleToggle}>
+    <Button size="icon" variant="outline" onClick={handleToggle} className="rounded-full">
       {theme === "light" ? (
         <Moon className={isRotating ? "rotate" : ""} />
       ) : (

@@ -148,8 +148,8 @@ def get_bot_response(user_query, conversation_id):
     try:
         response = client.chat.completions.create(
             messages=conversations[conversation_id],
-            # model="llama-3.3-70b-versatile",
-            model="llama3-groq-70b-8192-tool-use-preview",
+            model="llama-3.3-70b-versatile",
+            # model="llama3-groq-70b-8192-tool-use-preview",
             tools=tools,
             tool_choice="auto",
         )

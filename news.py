@@ -65,7 +65,7 @@ def main(question):
     for link in links:
         print(f"{count}. Reading content from {link['link']}")
         context = readContent(link['link'])
-        if(len(context) < 90):
+        if(len(context) < 150):
             print(f"{count}. Context too short.")
             continue
         

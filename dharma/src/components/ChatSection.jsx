@@ -164,7 +164,7 @@ function ChatSection() {
         {messages.length === 0 ? (
           <div className="flex flex-col gap-2 items-center justify-center h-full w-full">
             <p className="text-[30px] mb-2">What can I help with?</p>
-            <div className="flex flex-row flex-wrap items-center justify-center gap-2 mx-4">
+            <div className="flex flex-row flex-wrap items-center justify-center gap-2.5 w-[90vw] sm:w-[80vw] md:w-[60vw]">
               {[
                 "Images of Shinchan",
                 "Search web for News in India",
@@ -176,9 +176,16 @@ function ChatSection() {
                 <Button
                   key={index}
                   variant="ghost"
-                  className={`border rounded-full ${
-                    theme == "dark" ? "bg-[#18181b]" : "bg-[#fafafa]"
-                  }`}
+                  className="border
+                  rounded-3xl
+                  hover:text-[rgb(8,_112,_184)]
+                  dark:bg-[#18181b]
+                  bg-[#fafafa]
+                  dark:hover:bg-[#2c2c30]
+                  h-[150px] w-[120px] sm:h-[180px] sm:w-[150px]
+                  flex items-end text-md md:text-xl sm:text-lg py-3 text-wrap text-start
+                  hover:shadow-[0_5px_10px_rgba(8,_112,_184,_0.7)]
+                  "
                   onClick={() => {
                     setMsg(item);
                     setTriggerSend(true);

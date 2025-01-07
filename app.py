@@ -1,10 +1,9 @@
 from flask import Flask, request, jsonify, render_template
 from groq import Groq
 import os
-import json
 from dotenv import load_dotenv
 from flask_cors import CORS
-from tools import generate_qr_code, web_search, search_wikipedia_for_extra_information, image_search, read_website, newsFinder
+from tools import (th, my_local_tools)
 
 load_dotenv()
 app = Flask(__name__)
@@ -14,241 +13,61 @@ client = Groq(api_key=groq_api)
 conversations = {}
 
 SYSTEM_PROMPT = ""
-tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "generate_qr_code",
-                "description": "Generate a QR code from text data",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "data": {
-                            "type": "string",
-                            "description": "The text to encode in QR code"
-                        }
-                    },
-                    "required": ["data"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "web_search",
-                "description": "Perform a web search and return top 3 links",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "The search query"
-                        }
-                    },
-                    "required": ["query"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "search_wikipedia_for_extra_information",
-                "description": "Search Wikipedia for extra information",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "The search query"
-                        }
-                    },
-                    "required": ["query"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "image_search",
-                "description": """
-                search the web for images based on the user's query
-                """,
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "The search query for images"
-                        }
-                    },
-                    "required": ["query"],
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "read_website",
-                "description": "Read the content of the given website and summarize it to answer the query",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "url": {
-                            "type": "string",
-                            "description": "The website URL"
-                        }
-                    },
-                    "required": ["url"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "newsFinder",
-                "description" : "Search the internet for news and answer the question",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "The search query for news"
-                        }
-                    },
-                    "required": ["query"]
-                }
-            }
-        }
-    ]
-    
+
 
 def get_bot_response(user_query, conversation_id):
     if conversation_id not in conversations:
-        if SYSTEM_PROMPT != "" or SYSTEM_PROMPT != None:
-            conversations[conversation_id] = [
-                {
+        conversations[conversation_id] = [
+            {
                 "role": "system",
-                "content": SYSTEM_PROMPT
-                }
-            ]
-        else:
-            conversations[conversation_id] = [
-                {
-                    "role": "system",
-                    "content":"""You are Luna a female AI assistant. You can ask me anything and I will try to help you. I can also perform the following tasks:
-                1. [Text](href) - for displaying links
-                2. ![Alt](url) - for displaying images
-                4. ```code``` - for displaying code snippets"""
-                }
-            ]
+                "content": SYSTEM_PROMPT or "You are Luna, an AI assistant built by Abhishek. You have realtime access to the internet and can help with a variety of tasks."
+            }
+        ]
 
-    # Add user message to history
-    conversations[conversation_id].append({"role": "user", "content": f"{user_query}"})
+    conversations[conversation_id].append({"role": "user", "content": user_query})
 
     try:
+        # Initial response with tool calls
         response = client.chat.completions.create(
             messages=conversations[conversation_id],
-            # model="llama-3.3-70b-versatile",
-            model="llama3-groq-70b-8192-tool-use-preview",
-            tools=tools,
+            model = "llama-3.1-8b-instant",
+            tools=my_local_tools,
             tool_choice="auto",
         )
-
-        # Add bot response to history
-        response_message = response.choices[0].message
-        tool_calls = response_message.tool_calls
-
+        
+        tool_calls = response.choices[0].message.tool_calls
+        qr_tool = None
+        
         if tool_calls:
-            qr_base64 = None
-            for tool_call in tool_calls:
-                if tool_call.function.name == "generate_qr_code":
-                    function_args = json.loads(tool_call.function.arguments)
-                    qr_base64 = generate_qr_code(function_args["data"])
-                    
-                    # Add tool response
-                    conversations[conversation_id].append({
-                        "tool_call_id": tool_call.id,
-                        "role": "tool",
-                        "name": "generate_qr_code",
-                        "content": f"data:image/png;base64,{qr_base64}"
-                    })
+            try:
+                tool_run = th.run_tools(response)
+                if tool_run[1]['name'] == "generate_qr_code":
+                    qr_tool = tool_run[1]['content']
                 
-                elif tool_call.function.name == "web_search":
-                    function_args = json.loads(tool_call.function.arguments)
-                    web_results = web_search(function_args["query"])
-                    
-                    # Add tool response
-                    conversations[conversation_id].append({
-                        "tool_call_id": tool_call.id,
-                        "role": "tool",
-                        "name": "web_search",
-                        "content": web_results
-                    })
+                conversations[conversation_id].extend(tool_run)
                 
-                elif tool_call.function.name == "search_wikipedia_for_extra_information":
-                    function_args = json.loads(tool_call.function.arguments)
-                    wiki_results = search_wikipedia_for_extra_information(function_args["query"])
-                    
-                    # Add tool response
-                    conversations[conversation_id].append({
-                        "tool_call_id": tool_call.id,
-                        "role": "tool",
-                        "name": "search_wikipedia_for_extra_information",
-                        "content": wiki_results
-                    })
+                response = client.chat.completions.create(
+                    messages=conversations[conversation_id],
+                    model = "llama-3.3-70b-versatile",
+                    )
                 
-                elif tool_call.function.name == "image_search":
-                    function_args = json.loads(tool_call.function.arguments)
-                    image_results = image_search(function_args["query"])
-                    
-                    # Add tool response
-                    conversations[conversation_id].append({
-                        "tool_call_id": tool_call.id,
-                        "role": "tool",
-                        "name": "image_search",
-                        "content": image_results
-                    })
-
-                elif tool_call.function.name == "read_website":
-                    function_args = json.loads(tool_call.function.arguments)
-                    web_summary = read_website(function_args["url"])
-                    
-                    # Add tool response
-                    conversations[conversation_id].append({
-                        "tool_call_id": tool_call.id,
-                        "role": "tool",
-                        "name": "read_website",
-                        "content": web_summary
-                    })
-                
-                elif tool_call.function.name == "newsFinder":
-                    function_args = json.loads(tool_call.function.arguments)
-                    news_summary = newsFinder(function_args["query"])
-                    
-                    conversations[conversation_id].append({
-                        "tool_call_id": tool_call.id,
-                        "role": "tool",
-                        "name": "newsFinder",
-                        "content": news_summary
-                    })
-                    
-            # Get final response
-            second_response = client.chat.completions.create(
-                messages=conversations[conversation_id],
-                model="llama-3.3-70b-versatile",
-            )
+            except Exception as e:
+                return "Failed to call tool: " + str(e)
             
-            bot_message = second_response.choices[0].message.content + "<?THIS_MESSAGE_WAS_RESULT_OF_TOOL_USE_AND_NOT_TO_BE_COPIED?>"
-            if(qr_base64):
-                bot_message += f"\n\n<img src='data:image/png;base64,{qr_base64}' alt='QR Code' class='rounded h-[300px] w-[300px] rouned-2xl mt-3 '/>"
-        else:
-            bot_message = response_message.content
-
-        conversations[conversation_id].append({"role": "assistant", "content": bot_message})
-        return bot_message
-
+        
+        res = response.choices[0].message.content
+        if qr_tool:
+            res += f"\n\n<img src='data:image/png;base64,{qr_tool}' alt='QR Code' class='rounded h-[300px] w-[300px] rouned-2xl mt-3 '/>"
+            
+        res = res + "\n<?THIS_MESSAGE_WAS_RESULT_OF_TOOL_USE_AND_NOT_TO_BE_COPIED?>" if tool_calls else res
+        
+        conversations[conversation_id].append({"role": "assistant", "content": res})
+        return res
+    
     except Exception as e:
-        return f"Error: {str(e)}"
+        print("Error: ", e)
+        return str(e)
+
 
 
 @app.route("/")
@@ -260,10 +79,10 @@ def chat():
     try:
         conversation_id = request.form.get("conversation_id", "default")
         message = request.form.get("message", "")
-        # RAG = request.form.get("RAG-service")
-        # Get bot response
+
         response = get_bot_response(message, conversation_id)
-        return jsonify({"response": response})
+        
+        return jsonify({"response": response}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

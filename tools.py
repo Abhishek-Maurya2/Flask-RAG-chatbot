@@ -8,28 +8,180 @@ from dotenv import load_dotenv
 from news import main
 import json
 import re
+from toolhouse import Toolhouse
 
 load_dotenv()
 
-def parse_tool_response(response: str):
-    print("Response:", response)
-    function_regex = r"<function=(\w+)>(.*?)</function>"
-    match = re.search(function_regex, response)
-    print("Match:", match)
+th = Toolhouse(
+    api_key = os.getenv("TOOLHOUSE_API_KEY"),
+    provider="openai",
+)
 
-    if match:
-        function_name, args_string = match.groups()
-        try:
-            args = json.loads(args_string)
-            return {
-                "function": function_name,
-                "arguments": args,
+my_local_tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "newsFinder",
+            "description": "Retrieves the news from the internet for the query you provide.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Topic to search for in the news.",
+                    },
+                    "required": [
+                        "query",
+                    ],
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "webSearch",
+            "description": "Search the web for the query you provide and return [title](url) and description. as output.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Query to search the web for.",
+                    },
+                    "required": [
+                        "query",
+                    ],
+                },
+            },
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "imageSearch",
+            "description": "Search the web for the query you provide and return image urls in proper markdown as output. Example ![ALT](URL)",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Query to search the web for images.",
+                    },
+                    "required": [
+                        "query",
+                    ],
+                },
+            },
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "readWebsite",
+            "description": "Read the content of the website provided by the URL and return its content.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "description": "URL of the website to read.",
+                    },
+                    "required": [
+                        "url",
+                    ],
+                },
+            },
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "generate_qr_code",
+            "description": "Generate a QR code from text data",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "type": "string",
+                        "description": "The text to encode in QR code"
+                    }
+                },
+                "required": ["data"]
             }
-        except json.JSONDecodeError as error:
-            print(f"Error parsing function arguments: {error}")
-            return None
-    return None
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "WikipediaSearch",
+            "description": "Search wikipedia for the query you provide and answer the question based on the search.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Query to search wikipedia for.",
+                    },
+                    "required": [
+                        "query",
+                    ],
+                },
+            },
+        }
+    }
+]
 
+@th.register_local_tool("newsFinder")
+def newsFinder(query: str) -> str:
+    try:
+        return main(query)
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+@th.register_local_tool("webSearch")
+def webSearch(query: str) -> str:
+    """Perform a web search and return top 3 links"""
+    url = "https://www.googleapis.com/customsearch/v1"
+    params = {
+        "key": os.getenv("GOOGLE_SEARCH_API_KEY"),
+        "cx": os.getenv("GOOGLE_SEARCH_ENGINE_ID"),
+        "q": query,
+        "num": 5,
+    }
+    response = requests.get(url, params=params)
+    data = response.json()
+    output = ""
+    count = 1
+    for item in data["items"]:
+        output += f"{count}. {item['title']}\n{item['link']}\n{item['snippet']}\n\n"
+        output += "\nRemember to return it in proper markdown format example: 1. [\'title\'](\'url\')\n\'Description\'\n"
+        count += 1
+    return output
+
+@th.register_local_tool("imageSearch")
+def imageSearch(query: str) ->str:
+    """Search web for images using the given query and return urls"""
+    url = "https://www.googleapis.com/customsearch/v1"
+    params = {
+        "key": os.getenv("GOOGLE_SEARCH_API_KEY"),
+        "cx": os.getenv("GOOGLE_SEARCH_ENGINE_ID"),
+        "q": query,
+        "searchType": "image",
+        "num": 5,
+
+    }
+    response = requests.get(url, params=params)
+    data = response.json()["items"]
+    res = ""
+    count = 1
+    for item in data:
+        res += f"{count}. URL: {item['link']}\nALT: {item['title']}\n\n"
+        res += "\nRemember to return it in proper markdown format example: 1. ![\'ALT\'](\'URL\')\n"
+        count += 1
+    return res
+
+@th.register_local_tool("readWebsite")
 def read_website(url: str) -> str:
     """Read the content of the given website and return the text"""
     headers = {
@@ -49,25 +201,26 @@ def read_website(url: str) -> str:
     paragraphs = soup.find_all("p")
     return "\n\n".join([p.get_text() for p in paragraphs])
 
-def image_search(query: str) ->str:
-    """Search web for images using the given query and return urls"""
-    url = "https://www.googleapis.com/customsearch/v1"
-    params = {
-        "key": os.getenv("GOOGLE_SEARCH_API_KEY"),
-        "cx": os.getenv("GOOGLE_SEARCH_ENGINE_ID"),
-        "q": query,
-        "searchType": "image",
-        "num": 5,
+@th.register_local_tool("generate_qr_code")
+def generate_qr_code(data: str) -> str:
+    """Generate QR code and return as base64 string"""
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Convert to base64
+    buffered = io.BytesIO()
+    img.save(buffered, format="PNG")
+    return base64.b64encode(buffered.getvalue()).decode()
 
-    }
-    response = requests.get(url, params=params)
-    data = response.json()["items"]
-    res = ""
-    for item in data:
-        res += f"URL: {item['link']}\n\nTitle: {item['title']}\n\n"
-    return res
-
-def search_wikipedia_for_extra_information(query: str) -> str:
+@th.register_local_tool("WikipediaSearch")
+def wikipediaSearch(query: str) -> str:
     """"search wikipedia for the query and return the texts on the webpage"""
     texts = ""
     try:
@@ -90,43 +243,37 @@ def search_wikipedia_for_extra_information(query: str) -> str:
     except Exception as e:
         return f"Error searching Wikipedia: {str(e)}"
 
-def generate_qr_code(data: str) -> str:
-    """Generate QR code and return as base64 string"""
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data(data)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    
-    # Convert to base64
-    buffered = io.BytesIO()
-    img.save(buffered, format="PNG")
-    return base64.b64encode(buffered.getvalue()).decode()
 
-def web_search(query: str) -> str:
-    """Perform a web search and return top 3 links"""
-    url = "https://www.googleapis.com/customsearch/v1"
-    params = {
-        "key": os.getenv("GOOGLE_SEARCH_API_KEY"),
-        "cx": os.getenv("GOOGLE_SEARCH_ENGINE_ID"),
-        "q": query,
-        
-    }
-    response = requests.get(url, params=params)
-    data = response.json()
-    output = ""
-    for item in data["items"]:
-        output += f"Title: {item['title']}\n"
-        output += f"URL: {item['link']}\n\n"
-        output += f"Description: {item['snippet']}\n\n"
-    return output
-
-def newsFinder(query: str) -> str:
+# <function=newsFinder{"query": "HMPV virus in India"}</function>
+def parse_tool_calls(response: str):
     try:
-        return main(query)
+        pattern = r'<function=(.*?){(.*?)</function>'
+        pattern2 = r'<function=(.*?) {(.*?) </function>'
+        matches = re.findall(pattern, response)
+        if not matches:
+            matches = re.findall(pattern2, response)
+        name = matches[0][0]
+        params = "{" + matches[0][1]
+        # random id
+        id = "call_5t3r"
+        res = []
+        res.append({
+            "id": id,
+            "type": "function",
+            "function": {
+                "name": name,
+                "arguments": json.loads(params)
+            }
+        })
+        return res
     except Exception as e:
-        return f"Error: {str(e)}"
+        print(response)
+        print(f"Error parsing tool calls: {str(e)}")
+        return None
+    
+
+
+
+
+
+

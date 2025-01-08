@@ -129,6 +129,25 @@ my_local_tools = [
                 },
             },
         }
+    },
+    {
+        "type": "function",
+        "function" : {
+            "name": "code_executor",
+            "description": "Execute the python code you provide and return the output. Code should be provided without any ``` or ```python",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "description": "The code to execute without any ``` or ```python",
+                    },
+                    "required": [
+                        "code",
+                    ],
+                },
+            },
+        }
     }
 ]
 
@@ -168,7 +187,6 @@ def imageSearch(query: str) ->str:
         "cx": os.getenv("GOOGLE_SEARCH_ENGINE_ID"),
         "q": query,
         "searchType": "image",
-        "num": 5,
 
     }
     response = requests.get(url, params=params)
@@ -177,7 +195,7 @@ def imageSearch(query: str) ->str:
     count = 1
     for item in data:
         res += f"{count}. URL: {item['link']}\nALT: {item['title']}\n\n"
-        res += "\nRemember to return it in proper markdown format example: 1. ![\'ALT\'](\'URL\')\n"
+        res += "\nRemember to return it in proper markdown format example: ![\'ALT\'](\'URL\')\n"
         count += 1
     return res
 
@@ -242,6 +260,35 @@ def wikipediaSearch(query: str) -> str:
         return texts
     except Exception as e:
         return f"Error searching Wikipedia: {str(e)}"
+
+@th.register_local_tool("code_executor")
+def code_executor(code: str) -> str:
+    """Execute the python code and return the output"""
+    try:
+        # send code to this url https://rag-webservice-99kg.onrender.com/run for execution
+    #      if "error" in result:
+    #     return jsonify({"error": result["error"]}), 400
+    # return jsonify({"output": result["output"]}), 200
+    
+    
+        url = "https://rag-webservice-99kg.onrender.com/run"
+        # url = "http://192.168.1.24:3200/run"
+        data = {
+            "code": code
+        }
+        response = requests.post(url, json=data)
+        data = response.json()
+        if "error" in data or response.status_code != 200:
+            # print("Error executing code:\n", data)
+            return f"Error executing code: {data['error']}"
+        return data["output"]
+        
+    except Exception as e:
+        return f"Error executing code: {str(e)}"
+
+
+
+
 
 
 # <function=newsFinder{"query": "HMPV virus in India"}</function>

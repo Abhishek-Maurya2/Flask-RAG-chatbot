@@ -4,11 +4,13 @@ env/
 
 main.py
 1.py
+try.py
 # Ignore uploads folder
 uploads/
 
 # Ignore data folder
 data/
+try/
 
 # Ignore env file
 .env

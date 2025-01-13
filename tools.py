@@ -265,13 +265,13 @@ def wikipediaSearch(query: str) -> str:
 def code_executor(code: str) -> str:
     """Execute the python code and return the output"""
     try:
-        # send code to this url https://rag-webservice-99kg.onrender.com/run for execution
+        # send code to this url https://rag-webservice-vfpn.onrender.com/run for execution
     #      if "error" in result:
     #     return jsonify({"error": result["error"]}), 400
     # return jsonify({"output": result["output"]}), 200
     
     
-        url = "https://rag-webservice-99kg.onrender.com/run"
+        url = "https://rag-webservice-vfpn.onrender.com/run"
         # url = "http://192.168.1.24:3200/run"
         data = {
             "code": code

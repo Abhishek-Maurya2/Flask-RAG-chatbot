@@ -1,0 +1,66 @@
+from groq import Groq
+import os
+from tools import (th, my_local_tools)
+
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+conversations = {}
+sys_prompt = ""
+
+def set_sys_prompt(value):
+    global sys_prompt
+    sys_prompt = value
+
+def get_bot_response(user_query, conversation_id):
+    if (conversation_id not in conversations):
+        conversations[conversation_id] = [
+            {
+            "role": "system",
+            "content": sys_prompt or "You are Luna, an AI assistant built by Abhishek. You have realtime access to the internet and can help with a variety of tasks."
+            }
+        ]
+
+    conversations[conversation_id].append({"role": "user", "content": user_query})
+
+    try:
+        # Initial response with tool calls
+        response = client.chat.completions.create(
+            messages=conversations[conversation_id],
+            model = "llama-3.1-8b-instant",
+            tools=my_local_tools,
+            tool_choice="auto",
+        )
+        
+        tool_calls = response.choices[0].message.tool_calls
+        qr_tool = None
+        tool_name = None
+        
+        if tool_calls:
+            try:
+                tool_run = th.run_tools(response)
+                tool_name = tool_run[1]['name']
+                if tool_name == "generate_qr_code":
+                    qr_tool = tool_run[1]['content']
+                
+                conversations[conversation_id].extend(tool_run)
+                
+                response = client.chat.completions.create(
+                    messages=conversations[conversation_id],
+                    model = "llama-3.3-70b-versatile",
+                    )
+                
+            except Exception as e:
+                return "Failed to call tool: " + str(e)
+            
+        
+        res = response.choices[0].message.content
+        if qr_tool:
+            res += f"\n\n<img src='data:image/png;base64,{qr_tool}' alt='QR Code' class='rounded h-[300px] w-[300px] rouned-2xl mt-3 '/>"
+            
+        # res = res + "\n<?THIS_MESSAGE_WAS_RESULT_OF_TOOL_USE_AND_NOT_TO_BE_COPIED?>" if tool_calls else res
+        
+        conversations[conversation_id].append({"role": "assistant", "content": res})
+        return res
+    
+    except Exception as e:
+        print("Error: ", e)
+        return str(e)

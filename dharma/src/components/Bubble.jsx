@@ -50,7 +50,8 @@ const processBlocks = (block, index) => {
 };
 
 const textFormatter = (text) => {
-  console.log(text);
+  if (!text) return null;
+  
   const codeBlockRegex = /```(.*?)```/gs;
   const parts = text.split(codeBlockRegex);
 
@@ -253,6 +254,7 @@ const handleSpeak = async (msg) => {
 };
 
 const Bubbles = ({ message }) => {
+  // console.log(message.content);
   const theme = useThemeStore((state) => state.theme);
   const userFormattedText = (text) => {
     if (text.includes("Context: ")) {

@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template
 from logic import get_bot_response, conversations, sys_prompt
+from twilio.twiml.messaging_response import MessagingResponse
+
 
 routes_blueprint = Blueprint("routes_blueprint", __name__)
 
@@ -65,3 +67,25 @@ def set_system_prompt():
 @routes_blueprint.route("/get-system-prompt")
 def get_system_prompt():
     return jsonify({"system_prompt": sys_prompt})
+
+@routes_blueprint.route("/whatsapp", methods=['GET', 'POST'])
+def whatsapp():
+    whatsapp_client = MessagingResponse()
+    msg = request.values.get('Body', '')
+    number = request.values.get('From', '')
+    # user_profile = request.values.get('ProfileName', '')
+    
+    try:
+        res = get_bot_response(msg, number)
+        
+        if len(res) > 1000:
+            whatsapp_client.message(res[:1000])
+            whatsapp_client.message(res[1000:])
+        else:
+            whatsapp_client.message(res)
+        
+        return str(whatsapp_client)
+        
+    except Exception as e:
+        whatsapp_client.message("Failed to process request: " + str(e))
+        return str(whatsapp_client)

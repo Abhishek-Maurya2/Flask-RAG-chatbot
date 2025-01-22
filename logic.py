@@ -1,6 +1,6 @@
 from groq import Groq
 import os
-from tools import (th, my_local_tools)
+from tools import (th, my_local_tools, get_tool)
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 conversations = {}
@@ -30,9 +30,19 @@ def get_bot_response(user_query, conversation_id):
             tool_choice="auto",
         )
         
+        print("Response:\n",  response)
         tool_calls = response.choices[0].message.tool_calls
         qr_tool = None
         tool_name = None
+        
+        if not tool_calls and len(response.choices[0].message.content) < 30:
+            tool_calls = get_tool(response.choices[0].message.content)
+            print("Tool Calls:\n", tool_calls)
+            if tool_calls:
+                response.choices[0].message.tool_calls = tool_calls
+                response.choices[0].finish_reason = "tool_calls"
+                response.choices[0].message.content = None
+            print("Tool:\n",  response)
         
         if tool_calls:
             try:

@@ -14,6 +14,9 @@ import axios from "axios";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { coldarkDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
+import { marked } from "marked";
+import "../MarkdownStyles.css";
+
 const processBlocks = (block, index) => {
   const lines = block.split("\n");
   const language = lines[0];
@@ -51,7 +54,7 @@ const processBlocks = (block, index) => {
 
 const textFormatter = (text) => {
   if (!text) return null;
-  
+
   const codeBlockRegex = /```(.*?)```/gs;
   const parts = text.split(codeBlockRegex);
 
@@ -59,169 +62,179 @@ const textFormatter = (text) => {
     if (index % 2 === 1) {
       return processBlocks(part, index);
     } else {
-      // Combined link and image handler
-      part = part.replace(
-        // Match both markdown and direct URLs
-        /(!\[(.*?)\]\((.*?)\)|(\[(.*?)\]\((.*?)\))|((https?|ftp):\/\/[^\s/$.?#].[^\s]*))/g,
-        (
-          match,
-          _full,
-          imgAlt,
-          imgSrc,
-          _linkFull,
-          linkText,
-          linkHref,
-          directUrl
-        ) => {
-          // Handle markdown images
-          if (imgSrc) {
-            return `<img src="${imgSrc}" alt="${imgAlt}" class="w-[300px] h-[300px] object-cover rounded-xl">`;
+      // return { __html: marked(part) };
+      return (
+        <div
+          className="markdown-container"
+          dangerouslySetInnerHTML={
+            { __html: marked(part) } // eslint-disable-line
           }
-
-          // Handle markdown links
-          if (linkHref) {
-            return `<a href="${linkHref}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">${linkText}</a>`;
-          }
-
-          // Handle direct URLs
-          if (directUrl) {
-            const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(directUrl);
-            return isImage
-              ? `<img src="${directUrl}" alt="image" class="w-[300px] h-[300px] object-cover rounded-xl">`
-              : `<a href="${directUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">${directUrl}</a>`;
-          }
-
-          return match; // Return unchanged if no match
-        }
+        />
       );
 
-      // // Images (e.g. ![alt](src))
-      // part = part.replace(
-      //   /!\[(.*?)\]\((.*?)\)/g,
-      //   '<img src="$2" alt="$1" class="w-[300px] h-[300px] object-cover rounded-xl">'
-      // );
+      //   // Combined link and image handler
+      //   part = part.replace(
+      //     // Match both markdown and direct URLs
+      //     /(!\[(.*?)\]\((.*?)\)|(\[(.*?)\]\((.*?)\))|((https?|ftp):\/\/[^\s/$.?#].[^\s]*))/g,
+      //     (
+      //       match,
+      //       _full,
+      //       imgAlt,
+      //       imgSrc,
+      //       _linkFull,
+      //       linkText,
+      //       linkHref,
+      //       directUrl
+      //     ) => {
+      //       // Handle markdown images
+      //       if (imgSrc) {
+      //         return `<img src="${imgSrc}" alt="${imgAlt}" class="w-[300px] h-[300px] object-cover rounded-xl">`;
+      //       }
 
-      // // Links (e.g. [text](href))
-      // part = part.replace(
-      //   /\[(.*?)\]\((.*?)\)/g,
-      //   '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">$1</a>'
-      // );
+      //       // Handle markdown links
+      //       if (linkHref) {
+      //         return `<a href="${linkHref}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">${linkText}</a>`;
+      //       }
 
-      // // // urls (e.g. https://example.com)
-      // // part = part.replace(/((https?|ftp):\/\/[^\s/$.?#].[^\s]*)/g, (match) => {
-      // //   if (
-      // //     match.includes(".jpg") ||
-      // //     match.includes(".png") ||
-      // //     match.includes(".jpeg") ||
-      // //     match.includes(".gif")
-      // //   ) {
-      // //     return `<img src="${match}" alt="image" class="w-[300px] h-[300px] object-cover rounded-xl">`;
-      // //   }
-      // //   return `<a href="${match}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">${match}</a>`;
-      // // });
+      //       // Handle direct URLs
+      //       if (directUrl) {
+      //         const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(directUrl);
+      //         return isImage
+      //           ? `<img src="${directUrl}" alt="image" class="w-[300px] h-[300px] object-cover rounded-xl">`
+      //           : `<a href="${directUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">${directUrl}</a>`;
+      //       }
 
-      // Tool used "<?THIS_MESSAGE_WAS_RESULT_OF_TOOL_USE_AND_NOT_TO_BE_COPIED?>"
-      part = part.replace(
-        "<?THIS_MESSAGE_WAS_RESULT_OF_TOOL_USE_AND_NOT_TO_BE_COPIED?>",
-        `<div class="flex"><div class="flex flex-row items-center gap-2 bg-[#e6e6e6] dark:bg-[#1f1f1f] p-3 rounded-xl mt-2 border-2 hover:border-[#e8535397]"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shapes" style="height: 26px; width: 26px;"><path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"></path><rect x="3" y="14" width="7" height="7" rx="1"></rect><circle cx="17.5" cy="17.5" r="3.5"></circle></svg><p>This message was generated by a tool</p></div></div>`
-      );
+      //       return match; // Return unchanged if no match
+      //     }
+      //   );
 
-      part = part.replace(/`(.+?)`/g, "<code>$1</code>");
+      //   // // Images (e.g. ![alt](src))
+      //   // part = part.replace(
+      //   //   /!\[(.*?)\]\((.*?)\)/g,
+      //   //   '<img src="$2" alt="$1" class="w-[300px] h-[300px] object-cover rounded-xl">'
+      //   // );
 
-      // Convert headings (H1-H6)
-      part = part.replace(/^###### (.+)$/gm, "<h6>$1</h6>");
-      part = part.replace(/^##### (.+)$/gm, "<h5>$1</h5>");
-      part = part.replace(/^#### (.+)$/gm, "<h4>$1</h4>");
-      part = part.replace(/^### (.+)$/gm, "<h3>$1</h3>");
-      part = part.replace(/^## (.+)$/gm, "<h2>$1</h2>");
-      part = part.replace(/^# (.+)$/gm, "<h1>$1</h1>");
+      //   // // Links (e.g. [text](href))
+      //   // part = part.replace(
+      //   //   /\[(.*?)\]\((.*?)\)/g,
+      //   //   '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">$1</a>'
+      //   // );
 
-      // Convert bold (**text** or __text__)
-      part = part.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-      part = part.replace(/__(.+?)__/g, "<strong>$1</strong>");
+      //   // // // urls (e.g. https://example.com)
+      //   // // part = part.replace(/((https?|ftp):\/\/[^\s/$.?#].[^\s]*)/g, (match) => {
+      //   // //   if (
+      //   // //     match.includes(".jpg") ||
+      //   // //     match.includes(".png") ||
+      //   // //     match.includes(".jpeg") ||
+      //   // //     match.includes(".gif")
+      //   // //   ) {
+      //   // //     return `<img src="${match}" alt="image" class="w-[300px] h-[300px] object-cover rounded-xl">`;
+      //   // //   }
+      //   // //   return `<a href="${match}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">${match}</a>`;
+      //   // // });
 
-      // Convert italic (*text* or _text_)
-      part = part.replace(/\*(.+?)\*/g, "<em>$1</em>");
-      part = part.replace(/_(.+?)_/g, "<em>$1</em>");
+      //   // Tool used "<?THIS_MESSAGE_WAS_RESULT_OF_TOOL_USE_AND_NOT_TO_BE_COPIED?>"
+      //   part = part.replace(
+      //     "<?THIS_MESSAGE_WAS_RESULT_OF_TOOL_USE_AND_NOT_TO_BE_COPIED?>",
+      //     `<div class="flex"><div class="flex flex-row items-center gap-2 bg-[#e6e6e6] dark:bg-[#1f1f1f] p-3 rounded-xl mt-2 border-2 hover:border-[#e8535397]"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shapes" style="height: 26px; width: 26px;"><path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"></path><rect x="3" y="14" width="7" height="7" rx="1"></rect><circle cx="17.5" cy="17.5" r="3.5"></circle></svg><p>This message was generated by a tool</p></div></div>`
+      //   );
 
-      // Convert ordered lists (1. text)
-      part = part.replace(/^\s*\d+\.\s(.+)$/gm, "<li>$1</li>");
-      part = part.replace(/(<li>.*<\/li>)/gm, "<ol>$1</ol>");
-      part = part.replace(/<\/ol>\s*<ol>/g, ""); // Merge adjacent <ol> tags
+      //   part = part.replace(/`(.+?)`/g, "<code>$1</code>");
 
-      // Handle unordered lists (-, *, +) and sub-lists
-      let ulRegex = /^\s*([-\*\+])\s+(.+)$/gm;
-      part = part.replace(ulRegex, (match, symbol, content, offset, string) => {
-        const depth = match.match(/^\s*/)[0].length / 2; // Assuming 2 spaces per indentation level
-        const listType = symbol === "+" ? "ul" : "ul"; // Assuming + as unordered list marker
-        const nestedList =
-          "<ul>".repeat(depth) + `<li>${content}</li>` + "</ul>".repeat(depth);
-        return nestedList;
-      });
+      //   // Convert headings (H1-H6)
+      //   part = part.replace(/^###### (.+)$/gm, "<h6>$1</h6>");
+      //   part = part.replace(/^##### (.+)$/gm, "<h5>$1</h5>");
+      //   part = part.replace(/^#### (.+)$/gm, "<h4>$1</h4>");
+      //   part = part.replace(/^### (.+)$/gm, "<h3>$1</h3>");
+      //   part = part.replace(/^## (.+)$/gm, "<h2>$1</h2>");
+      //   part = part.replace(/^# (.+)$/gm, "<h1>$1</h1>");
 
-      // Convert blockquotes (> text)
-      part = part.replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>");
+      //   // Convert bold (**text** or __text__)
+      //   part = part.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      //   part = part.replace(/__(.+?)__/g, "<strong>$1</strong>");
 
-      // Match entire table structure
-      const tableRegex =
-        /^\s*\|(.+?)\|\s*$(?:\r?\n\s*\|[-:\s]+?\|\s*$)?(?:\r?\n\s*\|.+?\|\s*$)*/gm;
+      //   // Convert italic (*text* or _text_)
+      //   part = part.replace(/\*(.+?)\*/g, "<em>$1</em>");
+      //   part = part.replace(/_(.+?)_/g, "<em>$1</em>");
 
-      // Process the table
-      part = part.replace(tableRegex, (match) => {
-        const rows = match.trim().split("\n");
-        const [header, separator, ...bodyRows] = rows;
+      //   // Convert ordered lists (1. text)
+      //   part = part.replace(/^\s*\d+\.\s(.+)$/gm, "<li>$1</li>");
+      //   part = part.replace(/(<li>.*<\/li>)/gm, "<ol>$1</ol>");
+      //   part = part.replace(/<\/ol>\s*<ol>/g, ""); // Merge adjacent <ol> tags
 
-        // Get alignment from separator row
-        const alignments = separator
-          .split("|")
-          .filter(Boolean)
-          .map((cell) => {
-            if (cell.startsWith(":") && cell.endsWith(":")) return "center";
-            if (cell.endsWith(":")) return "right";
-            return "left";
-          });
+      //   // Handle unordered lists (-, *, +) and sub-lists
+      //   let ulRegex = /^\s*([-\*\+])\s+(.+)$/gm;
+      //   part = part.replace(ulRegex, (match, symbol, content, offset, string) => {
+      //     const depth = match.match(/^\s*/)[0].length / 2; // Assuming 2 spaces per indentation level
+      //     const listType = symbol === "+" ? "ul" : "ul"; // Assuming + as unordered list marker
+      //     const nestedList =
+      //       "<ul>".repeat(depth) + `<li>${content}</li>` + "</ul>".repeat(depth);
+      //     return nestedList;
+      //   });
 
-        // Process header
-        const headerHTML = processRow(header, true, alignments);
+      //   // Convert blockquotes (> text)
+      //   part = part.replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>");
 
-        // Process body
-        const bodyHTML = bodyRows
-          .map((row) => processRow(row, false, alignments))
-          .join("");
+      //   // Match entire table structure
+      //   const tableRegex =
+      //     /^\s*\|(.+?)\|\s*$(?:\r?\n\s*\|[-:\s]+?\|\s*$)?(?:\r?\n\s*\|.+?\|\s*$)*/gm;
 
-        return `
-    <table class="w-full text-sm text-center rounded-xl overflow-hidden shadow-md">
-      <thead class="text-xs text-gray-700 uppercase bg-[#d5d4d4] dark:bg-gray-700 dark:text-gray-400">
-        ${headerHTML}
-      </thead>
-      <tbody>
-        ${bodyHTML}
-      </tbody>
-    </table>`;
+      //   // Process the table
+      //   part = part.replace(tableRegex, (match) => {
+      //     const rows = match.trim().split("\n");
+      //     const [header, separator, ...bodyRows] = rows;
 
-        function processRow(row, isHeader, alignments) {
-          const cells = row.split("|").filter(Boolean);
-          const tag = isHeader ? "th" : "td";
-          const rowClass = isHeader ? "" : "";
+      //     // Get alignment from separator row
+      //     const alignments = separator
+      //       .split("|")
+      //       .filter(Boolean)
+      //       .map((cell) => {
+      //         if (cell.startsWith(":") && cell.endsWith(":")) return "center";
+      //         if (cell.endsWith(":")) return "right";
+      //         return "left";
+      //       });
 
-          return `<tr class="${rowClass}">${cells
-            .map((cell, i) => {
-              const align = alignments[i];
-              const cellClass = isHeader
-                ? "py-4 font-medium text-gray-900 dark:text-white border"
-                : "py-4 font-medium text-gray-900 dark:text-white border";
-              return `<${tag} ${
-                isHeader ? 'scope="col"' : ""
-              } class="${cellClass}">${cell.trim()}</${tag}>`;
-            })
-            .join("")}</tr>`;
-        }
-      });
+      //     // Process header
+      //     const headerHTML = processRow(header, true, alignments);
 
-      // Convert line breaks
-      part = part.replace(/\n/g, "<br>");
+      //     // Process body
+      //     const bodyHTML = bodyRows
+      //       .map((row) => processRow(row, false, alignments))
+      //       .join("");
 
-      return <div key={index} dangerouslySetInnerHTML={{ __html: part }}></div>;
+      //     return `
+      // <table class="w-full text-sm text-center rounded-xl overflow-hidden shadow-md">
+      //   <thead class="text-xs text-gray-700 uppercase bg-[#d5d4d4] dark:bg-gray-700 dark:text-gray-400">
+      //     ${headerHTML}
+      //   </thead>
+      //   <tbody>
+      //     ${bodyHTML}
+      //   </tbody>
+      // </table>`;
+
+      //     function processRow(row, isHeader, alignments) {
+      //       const cells = row.split("|").filter(Boolean);
+      //       const tag = isHeader ? "th" : "td";
+      //       const rowClass = isHeader ? "" : "";
+
+      //       return `<tr class="${rowClass}">${cells
+      //         .map((cell, i) => {
+      //           const align = alignments[i];
+      //           const cellClass = isHeader
+      //             ? "py-4 font-medium text-gray-900 dark:text-white border"
+      //             : "py-4 font-medium text-gray-900 dark:text-white border";
+      //           return `<${tag} ${
+      //             isHeader ? 'scope="col"' : ""
+      //           } class="${cellClass}">${cell.trim()}</${tag}>`;
+      //         })
+      //         .join("")}</tr>`;
+      //     }
+      //   });
+
+      //   // Convert line breaks
+      //   part = part.replace(/\n/g, "<br>");
+
+      //   return <div key={index} dangerouslySetInnerHTML={{ __html: part }}></div>;
     }
   });
 };
@@ -254,7 +267,7 @@ const handleSpeak = async (msg) => {
 };
 
 const Bubbles = ({ message }) => {
-  // console.log(message.content);
+  console.log(message.content);
   const theme = useThemeStore((state) => state.theme);
   const userFormattedText = (text) => {
     if (text.includes("Context: ")) {
@@ -283,9 +296,13 @@ const Bubbles = ({ message }) => {
           <div className="flex flex-row gap-4">
             <div className="bg-amber-500 h-6 w-6 rounded-full"></div>
             <div className="flex flex-col justify-start w-[80vw] md:w-[60vw]">
-              <div className="break-words">
+              <div className="break-words markdown-container">
                 {textFormatter(message.content)}
               </div>
+              {/* <div
+                className="markdown-container"
+                dangerouslySetInnerHTML={createMarkup()}
+              /> */}
               {/* options */}
               <div className="flex flex-row mt-2">
                 <Button

@@ -8,7 +8,9 @@ from dotenv import load_dotenv
 from news import main
 import json
 import re
+from groq import Groq
 from toolhouse import Toolhouse
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -289,38 +291,62 @@ def code_executor(code: str) -> str:
 
 
 
+class Function(BaseModel):
+    name = str
+    arguments = dict
 
+class ChatCompletionMessageToolCall(BaseModel):
+    id = str
+    function = Function
+    type = str
 
-# <function=newsFinder{"query": "HMPV virus in India"}</function>
-def parse_tool_calls(response: str):
-    try:
-        pattern = r'<function=(.*?){(.*?)</function>'
-        pattern2 = r'<function=(.*?) {(.*?) </function>'
-        matches = re.findall(pattern, response)
-        if not matches:
-            matches = re.findall(pattern2, response)
-        name = matches[0][0]
-        params = "{" + matches[0][1]
-        # random id
-        id = "call_5t3r"
-        res = []
-        res.append({
-            "id": id,
-            "type": "function",
-            "function": {
-                "name": name,
-                "arguments": json.loads(params)
+def get_tool(msg):
+    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    conversations = [
+        {
+            "role": "system",
+            "content": """
+            Return all of your response in JSON format. with attribute name and parameters only.
+            Example:
+            {
+                "name": "newsFinder",
+                "parameters": {
+                    "query": "HMPV virus in India"
+                }
             }
-        })
-        return res
-    except Exception as e:
-        print(response)
-        print(f"Error parsing tool calls: {str(e)}")
-        return None
+            NOTE: Do not include any other information in the response and don't use backticks(```).
+            """
+        }
+    ]
     
+    conversations.append({"role": "user", "content": msg})
+    try:
+        response = client.chat.completions.create(
+            messages=conversations,
+            model = "llama-3.1-8b-instant",
+        )
+        
+        res = response.choices[0].message.content
+        res = json.loads(res)
+        
+        name = res.get("name")
+        
+        if name not in ["newsFinder", "webSearch", "imageSearch", "readWebsite", "generate_qr_code", "WikipediaSearch", "code_executor"]:
+            print("Invalid tool name:", name)
+            return None
+        
+        params = res.get("parameters")
+        id = "call_" + name
+        
+        tool_call = ChatCompletionMessageToolCall(
+            id=id,
+            function=Function(arguments=params, name=name),
+            type="function"
+        )
+        return [tool_call]
+        
+    except Exception as e:
+        print("Error getting tool:", str(e))
+        return None
 
-
-
-
-
-
+print(get_tool("<function=newsFinder{'query': 'HMPV virus in India'}>"))

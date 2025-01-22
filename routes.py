@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, render_template
 from logic import get_bot_response, conversations, sys_prompt
-from twilio.twiml.messaging_response import MessagingResponse
+# from twilio.twiml.messaging_response import MessagingResponse
 
 
 routes_blueprint = Blueprint("routes_blueprint", __name__)
@@ -68,8 +68,8 @@ def set_system_prompt():
 def get_system_prompt():
     return jsonify({"system_prompt": sys_prompt})
 
-@routes_blueprint.route("/whatsapp", methods=['GET', 'POST'])
-def whatsapp():
+# @routes_blueprint.route("/whatsapp", methods=['GET', 'POST'])
+# def whatsapp():
     whatsapp_client = MessagingResponse()
     msg = request.values.get('Body', '')
     number = request.values.get('From', '')

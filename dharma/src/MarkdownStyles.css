@@ -1,0 +1,210 @@
+:root {
+  /* Light theme variables */
+  --light-text: #2d2d2d;
+  --light-heading: #1a1a1a;
+  --light-background: #ffffff;
+  --light-code-bg: #e6e6e6;
+  --light-border: #a4a4a4;
+
+  /* Dark theme variables */
+  --dark-text: #cfcfcf;
+  --dark-heading: #f0f0f0;
+  --dark-background: #1a1a1a;
+  --dark-code-bg: #2d2d2d;
+  --dark-border: #464646;
+}
+
+.markdown-container {
+  font-family: sans-serif;
+  line-height: 1.6;
+  color: var(--light-text);
+}
+
+.dark .markdown-container {
+  color: var(--dark-text);
+}
+
+.markdown-container h1 {
+  font-size: 1.8em;
+  color: var(--light-heading);
+  margin: 5px 0;
+}
+
+.dark .markdown-container h1 {
+  color: var(--dark-heading);
+}
+
+.markdown-container h2 {
+  font-size: 1.5em;
+  margin: 5px 0;
+}
+
+.markdown-container h3 {
+  font-size: 1.2em;
+  margin: 5px 0;
+}
+
+.markdown-container h4 {
+  font-size: 1em;
+  margin: 5px 0;
+}
+
+.markdown-container h5 {
+  font-size: 0.8em;
+  margin: 5px 0;
+}
+
+.markdown-container h6 {
+  font-size: 0.6em;
+  margin: 5px 0;
+}
+
+.markdown-container p {
+  margin: 0;
+  padding: 10px 0;
+  font-size: 1em;
+}
+.markdown-container strong {
+    font-weight: bold;
+    font-size: large;
+    color: var(--light-heading);
+}
+.dark .markdown-container strong {
+    color: var(--dark-heading);
+}
+
+.markdown-container a {
+  color: #4150f6;
+}
+
+.markdown-container a:hover {
+  text-decoration: underline;
+}
+
+.markdown-container ul {
+  list-style-type: disc;
+}
+
+.markdown-container ol {
+  list-style-type: decimal;
+}
+
+.markdown-container li {
+  margin-left: 1em;
+  padding: 0.5em 0;
+}
+
+.markdown-container blockquote {
+  margin: 0;
+  padding: 0;
+  border-left: 0.25em solid #f0f0f0;
+  padding-left: 1em;
+}
+
+.markdown-container pre {
+  margin: 0;
+  padding: 0;
+  background-color: var(--light-code-bg);
+  color: var(--light-heading);
+  /* border-radius: 0.5em; */
+  border: solid 1px var(--light-border);
+  padding: 1em;
+  overflow-x: auto;
+}
+
+.dark .markdown-container pre {
+  background-color: var(--dark-code-bg);
+  color: var(--dark-heading);
+  border: solid 1px var(--dark-border);
+}
+
+code {
+  background-color: var(--light-code-bg);
+  color: var(--light-heading);
+  border-radius: 0.5em;
+  padding: 0.25em;
+  margin: 0 8px;
+}
+.dark code {
+  background-color: var(--dark-code-bg);
+  color: var(--dark-heading);
+}
+
+pre code {
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+.markdown-container img {
+  max-width: 200px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.markdown-container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  padding: 0;
+}
+
+.markdown-container hr {
+  margin: 2rem 0;
+  border: solid 1px #a4a4a443;
+}
+
+.markdown-container blockquote {
+  margin: 0;
+  padding: 0;
+  border-left: 0.01em solid var(--light-border);
+  padding-left: 1em;
+}
+.dark .markdown-container blockquote {
+  border-left: 0.01em solid var(--dark-border);
+}
+
+/* tables here */
+.markdown-container table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    margin: 1em 0;
+}
+
+.markdown-container th:first-child {
+    border-top-left-radius: 0.5em;
+}
+
+.markdown-container th:last-child {
+    border-top-right-radius: 0.5em;
+}
+
+.markdown-container tr:last-child td:first-child {
+    border-bottom-left-radius: 0.5em;
+}
+
+.markdown-container tr:last-child td:last-child {
+    border-bottom-right-radius: 0.5em;
+}
+
+.markdown-container th {
+    background-color: var(--light-code-bg);
+}
+.dark .markdown-container th {
+    background-color: var(--dark-code-bg);
+}
+
+.markdown-container th,
+.markdown-container td {
+    border: 1px solid var(--light-border);
+    padding: 0.5em;
+}
+
+.dark .markdown-container th,
+.dark .markdown-container td {
+    border: 1px solid var(--dark-border);
+}
+
+

@@ -7,4 +7,4 @@ python-dotenv==1.0.0
 qrcode==8.0
 gunicorn==23.0.0
 toolhouse
-twilio
+# twilio

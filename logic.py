@@ -17,7 +17,7 @@ def get_bot_response(user_query, conversation_id):
         conversations[conversation_id] = [
             {
             "role": "system",
-            "content": sys_prompt or "You are Luna, an AI assistant built by Abhishek. You have realtime access to the internet and can help with a variety of tasks."
+            "content": sys_prompt or "You are Luna, an AI assistant built by Abhishek. You have realtime access to the internet and can also send email in realtime and can help with a variety of tasks."
             }
         ]
 
@@ -32,7 +32,7 @@ def get_bot_response(user_query, conversation_id):
             tool_choice="auto",
         )
         
-        # print("Response:\n",  response)
+        
         tool_calls = response.choices[0].message.tool_calls
         qr_tool = None
         
@@ -64,6 +64,8 @@ def get_bot_response(user_query, conversation_id):
                     args = json.loads(tool_call.function.arguments)
                     res = func(**args)
                     
+                    # print("Tool Response: ", res)
+                    
                     if name == "generate_qr_code":
                         qr_tool = res
                         res = f"data:image/png;base64,{res}"
@@ -91,8 +93,6 @@ def get_bot_response(user_query, conversation_id):
         if qr_tool:
             res += f"\n\n<img src='data:image/png;base64,{qr_tool}' alt='QR Code' class='rounded h-[300px] w-[300px] rouned-2xl mt-3 '/>"
             
-        # res = res + "\n<?THIS_MESSAGE_WAS_RESULT_OF_TOOL_USE_AND_NOT_TO_BE_COPIED?>" if tool_calls else res
-        
         conversations[conversation_id].append({"role": "assistant", "content": res})
         return res
     

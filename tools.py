@@ -145,7 +145,7 @@ my_local_tools = [
         "type": "function",
         "function": {
             "name": "sendEmail",
-            "description": "Send an email using Gmail SMTP.",
+            "description": "Send an email using Gmail SMTP user name is Abhishek Kumar Maurya and email is 208akmaurya@gmail.com",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -300,7 +300,7 @@ def code_executor(code: str) -> str:
     except Exception as e:
         return f"Error executing code: {str(e)}"
 
-def sendEmail(subject, message, to_addr):
+def sendEmail(subject:str, message:str, to_addr:str) -> str:
     import smtplib
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
@@ -339,9 +339,9 @@ def sendEmail(subject, message, to_addr):
         text = msg.as_string()
         server.sendmail(from_addr, to_addr, text)
         server.quit()
-        return True
+        return "Email sent successfully!\nto: " + to_addr + "\nsubject: " + subject + "\nmessage: " + message + "\n" + "from: " + from_addr
         
     except Exception as e:
         print(f"Error sending email: {str(e)}")
-        return False
+        return "Error sending email. Please check the logs for more details."
 

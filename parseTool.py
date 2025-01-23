@@ -51,7 +51,7 @@ def get_tool(msg):
         
         name = res.get("name")
         
-        if name not in ["newsFinder", "webSearch", "imageSearch", "readWebsite", "generate_qr_code", "WikipediaSearch", "code_executor"]:
+        if name not in ["newsFinder", "webSearch", "imageSearch", "readWebsite", "generate_qr_code", "WikipediaSearch", "code_executor", "sendEmail"]:
             print("Invalid tool name:", name)
             return None
         

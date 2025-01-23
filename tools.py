@@ -6,14 +6,8 @@ from bs4 import BeautifulSoup
 import os
 from dotenv import load_dotenv
 from news import main
-# from toolhouse import Toolhouse
 
 load_dotenv()
-
-# th = Toolhouse(
-#     api_key = os.getenv("TOOLHOUSE_API_KEY"),
-#     provider="openai",
-# )
 
 my_local_tools = [
     {
@@ -146,17 +140,44 @@ my_local_tools = [
                 },
             },
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "sendEmail",
+            "description": "Send an email using Gmail SMTP.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "subject": {
+                        "type": "string",
+                        "description": "The subject of the email",
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "The body of the email",
+                    },
+                    "to_addr": {
+                        "type": "string",
+                        "description": "Recipient's email address",
+                    },
+                    "required": [
+                        "subject",
+                        "message",
+                        "to_addr",
+                    ],
+                },
+            },
+        }
     }
 ]
 
-# @th.register_local_tool("newsFinder")
 def newsFinder(query: str) -> str:
     try:
         return main(query)
     except Exception as e:
         return f"Error: {str(e)}"
 
-# @th.register_local_tool("webSearch")
 def webSearch(query: str) -> str:
     """Perform a web search and return top 3 links"""
     url = "https://www.googleapis.com/customsearch/v1"
@@ -176,7 +197,6 @@ def webSearch(query: str) -> str:
         count += 1
     return output
 
-# @th.register_local_tool("imageSearch")
 def imageSearch(query: str) ->str:
     """Search web for images using the given query and return urls"""
     url = "https://www.googleapis.com/customsearch/v1"
@@ -197,7 +217,6 @@ def imageSearch(query: str) ->str:
         count += 1
     return res
 
-# @th.register_local_tool("readWebsite")
 def read_website(url: str) -> str:
     """Read the content of the given website and return the text"""
     headers = {
@@ -217,7 +236,6 @@ def read_website(url: str) -> str:
     paragraphs = soup.find_all("p")
     return "\n\n".join([p.get_text() for p in paragraphs])
 
-# @th.register_local_tool("generate_qr_code")
 def generate_qr_code(data: str) -> str:
     """Generate QR code and return as base64 string"""
     qr = qrcode.QRCode(
@@ -235,7 +253,6 @@ def generate_qr_code(data: str) -> str:
     img.save(buffered, format="PNG")
     return base64.b64encode(buffered.getvalue()).decode()
 
-# @th.register_local_tool("WikipediaSearch")
 def wikipediaSearch(query: str) -> str:
     """"search wikipedia for the query and return the texts on the webpage"""
     texts = ""
@@ -259,7 +276,6 @@ def wikipediaSearch(query: str) -> str:
     except Exception as e:
         return f"Error searching Wikipedia: {str(e)}"
 
-# @th.register_local_tool("code_executor")
 def code_executor(code: str) -> str:
     """Execute the python code and return the output"""
     try:
@@ -284,4 +300,48 @@ def code_executor(code: str) -> str:
     except Exception as e:
         return f"Error executing code: {str(e)}"
 
+def sendEmail(subject, message, to_addr):
+    import smtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    
+    """
+    Send an email using Gmail SMTP.
+    
+    Requires an App-Specific Password from Google:
+    1. Enable 2-Step Verification in your Google Account
+    2. Go to Security > App passwords
+    3. Generate a new app password for 'Mail'
+    4. Use that password instead of your regular Gmail password
+    
+    Args:
+        subject (str): The subject of the email
+        message (str): The body of the email
+        from_addr (str): Sender's Gmail address
+        to_addr (str): Recipient's email address
+        password (str): Gmail App-Specific Password
+    
+    Returns:
+        bool: True if email sent successfully, False otherwise
+    """
+    try:
+        from_addr = os.getenv("MAIL_FROM")
+        msg = MIMEMultipart()
+        msg['From'] = from_addr
+        msg['To'] = to_addr
+        msg['Subject'] = subject
+        
+        msg.attach(MIMEText(message, 'plain'))
+        
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(from_addr, os.getenv("MAIL_PASS"))
+        text = msg.as_string()
+        server.sendmail(from_addr, to_addr, text)
+        server.quit()
+        return True
+        
+    except Exception as e:
+        print(f"Error sending email: {str(e)}")
+        return False
 

@@ -95,8 +95,7 @@ function ChatSection() {
     // if shift + enter, add new line
     if (e.key === "Enter" && e.shiftKey) {
       setMsg((prev) => prev + "\n");
-    }
-    else if (e.key === "Enter") {
+    } else if (e.key === "Enter") {
       handleSendMessage();
     }
   };

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import ThemeToggleButton from "./ThemeToggleButton";
+import { ThemeToggleButton, AnimatedButton } from "./ThemeToggleButton";
 import axios from "axios";
 import useMessageStore from "@/store/useMessageStore";
 import useThemeStore from "@/store/useThemeStore";
 import { Button } from "./ui/button";
 import { ClipboardPlus, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 function SidebarComponent() {
   const { theme } = useThemeStore();
@@ -16,6 +17,7 @@ function SidebarComponent() {
 
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hover, setHover] = useState(false);
   const pingRAG = async () => {
     try {
       const url = `${import.meta.env.VITE_RAG_URL}`;
@@ -100,10 +102,12 @@ function SidebarComponent() {
     pingRAG();
     getSystemPrompt();
   }, []);
-  
+
   return (
     <div className={`flex flex-col justify-between w-full h-full px-4 py-2`}>
-      <Button onClick={() => handleNewChat()} className="rounded-3xl">New Chat</Button>
+      <Button onClick={() => handleNewChat()} className="rounded-3xl">
+        New Chat
+      </Button>
       <p className="text-xl mt-2">History</p>
       {loading ? (
         <div className="flex items-center justify-center h-[63vh]">
@@ -147,16 +151,33 @@ function SidebarComponent() {
         >
           Delete History
         </Button>
-        <div className="flex gap-1 mb-2">
+        <div className="flex flex-row items-center gap-1 my-2 overflow-hidden">
           <ThemeToggleButton />
-          <Button
+          {/* <Button
             variant="outline"
-            size="icon"
-            className="rounded-full"
+            className="flex flex-row items-center gap-1 rounded-full py-6"
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
             onClick={() => setSystemPrompt(!systemPrompt)}
           >
-            <ClipboardPlus />
-          </Button>
+            <ClipboardPlus size={24} />
+            {hover && (
+              <motion.p
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.2 }}
+              >
+                System Prompt
+              </motion.p>
+            )}
+          </Button> */}
+          <AnimatedButton
+            onClick={() => setSystemPrompt(!systemPrompt)}
+            icon={ClipboardPlus}
+            label={"System Prompt"}
+            
+          />
         </div>
       </div>
       {systemPrompt && (

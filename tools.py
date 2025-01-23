@@ -6,18 +6,14 @@ from bs4 import BeautifulSoup
 import os
 from dotenv import load_dotenv
 from news import main
-import json
-import re
-from groq import Groq
-from toolhouse import Toolhouse
-from pydantic import BaseModel
+# from toolhouse import Toolhouse
 
 load_dotenv()
 
-th = Toolhouse(
-    api_key = os.getenv("TOOLHOUSE_API_KEY"),
-    provider="openai",
-)
+# th = Toolhouse(
+#     api_key = os.getenv("TOOLHOUSE_API_KEY"),
+#     provider="openai",
+# )
 
 my_local_tools = [
     {
@@ -153,14 +149,14 @@ my_local_tools = [
     }
 ]
 
-@th.register_local_tool("newsFinder")
+# @th.register_local_tool("newsFinder")
 def newsFinder(query: str) -> str:
     try:
         return main(query)
     except Exception as e:
         return f"Error: {str(e)}"
 
-@th.register_local_tool("webSearch")
+# @th.register_local_tool("webSearch")
 def webSearch(query: str) -> str:
     """Perform a web search and return top 3 links"""
     url = "https://www.googleapis.com/customsearch/v1"
@@ -180,7 +176,7 @@ def webSearch(query: str) -> str:
         count += 1
     return output
 
-@th.register_local_tool("imageSearch")
+# @th.register_local_tool("imageSearch")
 def imageSearch(query: str) ->str:
     """Search web for images using the given query and return urls"""
     url = "https://www.googleapis.com/customsearch/v1"
@@ -201,7 +197,7 @@ def imageSearch(query: str) ->str:
         count += 1
     return res
 
-@th.register_local_tool("readWebsite")
+# @th.register_local_tool("readWebsite")
 def read_website(url: str) -> str:
     """Read the content of the given website and return the text"""
     headers = {
@@ -221,7 +217,7 @@ def read_website(url: str) -> str:
     paragraphs = soup.find_all("p")
     return "\n\n".join([p.get_text() for p in paragraphs])
 
-@th.register_local_tool("generate_qr_code")
+# @th.register_local_tool("generate_qr_code")
 def generate_qr_code(data: str) -> str:
     """Generate QR code and return as base64 string"""
     qr = qrcode.QRCode(
@@ -239,7 +235,7 @@ def generate_qr_code(data: str) -> str:
     img.save(buffered, format="PNG")
     return base64.b64encode(buffered.getvalue()).decode()
 
-@th.register_local_tool("WikipediaSearch")
+# @th.register_local_tool("WikipediaSearch")
 def wikipediaSearch(query: str) -> str:
     """"search wikipedia for the query and return the texts on the webpage"""
     texts = ""
@@ -263,7 +259,7 @@ def wikipediaSearch(query: str) -> str:
     except Exception as e:
         return f"Error searching Wikipedia: {str(e)}"
 
-@th.register_local_tool("code_executor")
+# @th.register_local_tool("code_executor")
 def code_executor(code: str) -> str:
     """Execute the python code and return the output"""
     try:
@@ -289,64 +285,3 @@ def code_executor(code: str) -> str:
         return f"Error executing code: {str(e)}"
 
 
-
-
-class Function(BaseModel):
-    name = str
-    arguments = dict
-
-class ChatCompletionMessageToolCall(BaseModel):
-    id = str
-    function = Function
-    type = str
-
-def get_tool(msg):
-    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-    conversations = [
-        {
-            "role": "system",
-            "content": """
-            Return all of your response in JSON format. with attribute name and parameters only.
-            Example:
-            {
-                "name": "newsFinder",
-                "parameters": {
-                    "query": "HMPV virus in India"
-                }
-            }
-            NOTE: Do not include any other information in the response and don't use backticks(```).
-            """
-        }
-    ]
-    
-    conversations.append({"role": "user", "content": msg})
-    try:
-        response = client.chat.completions.create(
-            messages=conversations,
-            model = "llama-3.1-8b-instant",
-        )
-        
-        res = response.choices[0].message.content
-        res = json.loads(res)
-        
-        name = res.get("name")
-        
-        if name not in ["newsFinder", "webSearch", "imageSearch", "readWebsite", "generate_qr_code", "WikipediaSearch", "code_executor"]:
-            print("Invalid tool name:", name)
-            return None
-        
-        params = res.get("parameters")
-        id = "call_" + name
-        
-        tool_call = ChatCompletionMessageToolCall(
-            id=id,
-            function=Function(arguments=params, name=name),
-            type="function"
-        )
-        return [tool_call]
-        
-    except Exception as e:
-        print("Error getting tool:", str(e))
-        return None
-
-print(get_tool("<function=newsFinder{'query': 'HMPV virus in India'}>"))

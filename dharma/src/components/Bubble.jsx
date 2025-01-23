@@ -16,6 +16,7 @@ import { coldarkDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 import { marked } from "marked";
 import "../MarkdownStyles.css";
+import { AnimatedButton } from "./ThemeToggleButton";
 
 const processBlocks = (block, index) => {
   const lines = block.split("\n");
@@ -267,7 +268,7 @@ const handleSpeak = async (msg) => {
 };
 
 const Bubbles = ({ message }) => {
-  console.log(message.content);
+  // console.log(message.content);
   const theme = useThemeStore((state) => state.theme);
   const userFormattedText = (text) => {
     if (text.includes("Context: ")) {
@@ -305,58 +306,53 @@ const Bubbles = ({ message }) => {
               /> */}
               {/* options */}
               <div className="flex flex-row mt-2">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="rounded-full"
+                <AnimatedButton
                   onClick={() => handleSpeak(message.content)}
-                >
-                  <Volume2 />
-                </Button>
-                <Button
-                  size="icon"
+                  icon={Volume2}
+                  label={"Speak Aloud"}
                   variant="ghost"
-                  className="rounded-full"
+                  size="icon"
+                />
+                <AnimatedButton
                   onClick={() => {
                     navigator.clipboard.writeText(message.content);
                     toast.success("Copied to clipboard");
                   }}
-                >
-                  <Copy />
-                </Button>
-                <Button
-                  size="icon"
+                  icon={Copy}
+                  label={"Copy Text"}
                   variant="ghost"
-                  className="rounded-full"
+                  size="icon"
+                />
+                <AnimatedButton
                   onClick={() => {
                     navigator.share({
                       title: "Dharma Ai",
                       text: message.content,
                     });
                   }}
-                >
-                  <Share2Icon />
-                </Button>
-                <Button
-                  size="icon"
+                  icon={Share2Icon}
+                  label={"Share"}
                   variant="ghost"
-                  className="rounded-full"
+                  size="icon"
+                />
+                <AnimatedButton
                   onClick={() => {
                     toast.success("Thanks for the feedback");
                   }}
-                >
-                  <ThumbsUp />
-                </Button>
-                <Button
-                  size="icon"
+                  icon={ThumbsUp}
+                  label={"Like"}
                   variant="ghost"
-                  className="rounded-full"
+                  size="icon"
+                />
+                <AnimatedButton
                   onClick={() => {
                     toast.error("Thanks for the feedback");
                   }}
-                >
-                  <ThumbsDown />
-                </Button>
+                  icon={ThumbsDown}
+                  label={"Dislike"}
+                  variant="ghost"
+                  size="icon"
+                />
               </div>
             </div>
           </div>

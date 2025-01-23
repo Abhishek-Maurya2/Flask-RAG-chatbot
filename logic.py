@@ -1,6 +1,8 @@
 from groq import Groq
 import os
-from tools import (th, my_local_tools, get_tool)
+import json
+from tools import ( my_local_tools, newsFinder, webSearch, imageSearch, read_website, generate_qr_code, wikipediaSearch, code_executor )
+from parseTool import get_tool
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 conversations = {}
@@ -30,33 +32,56 @@ def get_bot_response(user_query, conversation_id):
             tool_choice="auto",
         )
         
-        print("Response:\n",  response)
+        # print("Response:\n",  response)
         tool_calls = response.choices[0].message.tool_calls
         qr_tool = None
         tool_name = None
         
-        if not tool_calls and len(response.choices[0].message.content) < 30:
+        if not tool_calls and len(response.choices[0].message.content) < 70:
             tool_calls = get_tool(response.choices[0].message.content)
-            print("Tool Calls:\n", tool_calls)
+            print("\n\nTool Calls:\n", tool_calls)
             if tool_calls:
                 response.choices[0].message.tool_calls = tool_calls
                 response.choices[0].finish_reason = "tool_calls"
                 response.choices[0].message.content = None
-            print("Tool:\n",  response)
+            print("\n\nTool:\n",  response)
         
         if tool_calls:
+            tools = {
+                "newsFinder": newsFinder,
+                "webSearch": webSearch,
+                "imageSearch": imageSearch,
+                "readWebsite": read_website,
+                "generate_qr_code": generate_qr_code,
+                "WikipediaSearch": wikipediaSearch,
+                "code_executor": code_executor
+            }
+            
             try:
-                tool_run = th.run_tools(response)
-                tool_name = tool_run[1]['name']
-                if tool_name == "generate_qr_code":
-                    qr_tool = tool_run[1]['content']
+                for tool_call in tool_calls:
+                    name = tool_call.function.name
+                    func = tools[name]
+                    args = json.loads(tool_call.function.arguments)
+                    res = func(**args)
+                    
+                    if name == "generate_qr_code":
+                        qr_tool = res
+                        res = f"data:image/png;base64,{res}"
+                    
+                    conversations[conversation_id].append({"role": "tool", "content": res, "tool_call_id" : tool_call.id, "name" : name})
                 
-                conversations[conversation_id].extend(tool_run)
                 
-                response = client.chat.completions.create(
+                finalResponse = client.chat.completions.create(
                     messages=conversations[conversation_id],
                     model = "llama-3.3-70b-versatile",
                     )
+                
+                finalRes = finalResponse.choices[0].message.content
+                if(qr_tool):
+                    finalRes += f"\n\n<img src='data:image/png;base64,{qr_tool}' alt='QR Code' class='rounded h-[300px] w-[300px] rouned-2xl mt-3 '/>"
+                conversations[conversation_id].append({"role": "assistant", "content": finalRes})
+                return finalRes
+                
                 
             except Exception as e:
                 return "Failed to call tool: " + str(e)

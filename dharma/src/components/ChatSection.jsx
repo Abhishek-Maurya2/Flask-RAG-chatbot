@@ -1,4 +1,11 @@
-import { ArrowUp, File, LoaderCircle, Paperclip, X } from "lucide-react";
+import {
+  ArrowUp,
+  ArrowUpRight,
+  File,
+  LoaderCircle,
+  Paperclip,
+  X,
+} from "lucide-react";
 import React, { useRef, useEffect, useState } from "react";
 import axios from "axios";
 import useMessageStore from "@/store/useMessageStore";
@@ -194,7 +201,12 @@ function ChatSection() {
                     setTriggerSend(true);
                   }}
                 >
-                  {item}
+                  <div className="flex flex-col items-center justify-between h-full w-full">
+                    <div className="flex items-center justify-end w-full">
+                      <ArrowUpRight style={{ width: "38px", height: "38px" }} />
+                    </div>
+                    {item}
+                  </div>
                 </Button>
               ))}
             </div>

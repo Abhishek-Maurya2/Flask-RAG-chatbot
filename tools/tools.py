@@ -5,7 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 import os
 from dotenv import load_dotenv
-from news import main
+from tools.news import main
 
 load_dotenv()
 

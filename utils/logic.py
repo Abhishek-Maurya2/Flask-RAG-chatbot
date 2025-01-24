@@ -1,8 +1,8 @@
 from groq import Groq
 import os
 import json
-from tools import ( my_local_tools, newsFinder, webSearch, imageSearch, read_website, generate_qr_code, wikipediaSearch, code_executor, sendEmail )
-from parseTool import get_tool
+from tools.tools import ( my_local_tools, newsFinder, webSearch, imageSearch, read_website, generate_qr_code, wikipediaSearch, code_executor, sendEmail )
+from tools.parseTool import get_tool
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 conversations = {}

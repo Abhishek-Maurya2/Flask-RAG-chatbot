@@ -6,16 +6,27 @@ import {
   ThumbsUp,
   Volume2,
   Copy,
-  Shapes,
+  MoreHorizontal,
+  Clipboard,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
 import axios from "axios";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { coldarkDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-
 import { marked } from "marked";
 import "../MarkdownStyles.css";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AnimatedButton } from "./ThemeToggleButton";
 
 const processBlocks = (block, index) => {
@@ -66,6 +77,7 @@ const textFormatter = (text) => {
       // return { __html: marked(part) };
       return (
         <div
+          key={index}
           className="markdown-container"
           dangerouslySetInnerHTML={
             { __html: marked(part) } // eslint-disable-line
@@ -276,19 +288,92 @@ const Bubbles = ({ message }) => {
     }
     return text;
   };
+  const [hover, setHover] = useState(false);
 
   return (
     <>
       {message.role === "user" && (
-        <div className="flex justify-end items-end mx-4 w-[90vw] md:w-[70vw] my-2">
-          <div
-            className={`rounded-3xl px-5 py-2.5 ${
-              theme === "dark" ? "bg-[#1f1f1f]" : "bg-[#d5d4d4]"
-            } max-w-[70vw] sm:max-w-[50vw] break-words`}
+        <div className="flex items-center justify-end gap-2 mx-4 w-[90vw] md:w-[70vw] my-2">
+          <motion.div
+            className="flex flex-row gap-2"
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
           >
-            {userFormattedText(message.content)}
-          </div>
-          {/* <div className="h-4 w-4 bg-red-500 rounded-full"></div> */}
+            <AnimatePresence>
+              {hover && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20, transition: { delay: 0.7 } }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                >
+                  <DropdownMenu>
+                    <DropdownMenuTrigger>
+                      <AnimatedButton
+                        icon={MoreHorizontal}
+                        size="icon"
+                        variant="ghost"
+                      />
+                    </DropdownMenuTrigger>
+
+                    <DropdownMenuContent className="rounded-2xl p-2">
+
+                      <DropdownMenuItem className="rounded-full">
+                        <Button
+                          onClick={() => {
+                            navigator.clipboard.writeText(message.content);
+                            toast.success("Copied to clipboard");
+                          }}
+                          variant="ghost"
+                          size="icon"
+                          className="flex flex-row items-center justify-start gap-2 px-2 m-0 h-8"
+                        >
+                          <Clipboard className="w-5 h-5" />
+                          Copy
+                        </Button>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="rounded-full">
+                        <Button
+                          onClick={() => {
+                            navigator.clipboard.writeText(message.content);
+                            toast.success("Copied to clipboard");
+                          }}
+                          variant="ghost"
+                          size="icon"
+                          className="flex flex-row items-center justify-start gap-2 px-2 m-0 h-8"
+                        >
+                          <Pencil className="w-5 h-5" />
+                          Edit
+                        </Button>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="rounded-full">
+                        <Button
+                          onClick={() => {
+                            navigator.clipboard.writeText(message.content);
+                            toast.success("Copied to clipboard");
+                          }}
+                          variant="ghost"
+                          size="icon"
+                          className="flex flex-row items-center justify-start gap-2 px-2 m-0 h-8"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                          Delete
+                        </Button>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div
+              className={`rounded-3xl px-5 py-2.5 ${
+                theme === "dark" ? "bg-[#1f1f1f]" : "bg-[#d5d4d4]"
+              } max-w-[70vw] sm:max-w-[50vw] break-words`}
+            >
+              {userFormattedText(message.content)}
+            </div>
+          </motion.div>
         </div>
       )}
       {/* assistant */}

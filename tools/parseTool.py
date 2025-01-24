@@ -4,7 +4,7 @@ import os
 import json
 from typing import Dict
 from dotenv import load_dotenv
-from tools import my_local_tools
+from tools.tools import my_local_tools
 
 load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))

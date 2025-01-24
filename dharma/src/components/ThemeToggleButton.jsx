@@ -15,7 +15,6 @@ export const AnimatedButton = ({
   textSize = "text-md",
   size = "default",
   variant = "outline",
-  className,
 }) => {
   const [hover, setHover] = useState(false);
   const [iconRotate, setIconRotate] = useState(false);

@@ -6,7 +6,6 @@ import useThemeStore from "@/store/useThemeStore";
 import { Button } from "./ui/button";
 import { ClipboardPlus, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 
 function SidebarComponent() {
   const { theme } = useThemeStore();

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, render_template
-from logic import get_bot_response, conversations, sys_prompt
+from utils.logic import get_bot_response, conversations, sys_prompt
 # from twilio.twiml.messaging_response import MessagingResponse
 
 

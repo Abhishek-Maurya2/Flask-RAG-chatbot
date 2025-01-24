@@ -16,12 +16,7 @@ const useMessageStore = create((Set) => ({
 
   loadMessage: (messages) => {
     Set((state) => {
-      const newMessages = messages.filter(
-        (msg) =>
-          msg.role === "user" ||
-          (msg.role === "assistant" && msg.content != null)
-      );
-      return { messages: newMessages, trigger: state.trigger + 1 };
+      return { messages: messages, trigger: state.trigger + 1 };
     });
   },
 }));

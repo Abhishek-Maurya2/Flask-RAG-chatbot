@@ -214,7 +214,7 @@ function ChatSection() {
         ) : (
           <>
             {messages.map((message, index) => {
-              return <Bubbles key={index} message={message} />;
+              return <Bubbles key={index} message={message} idx = {index} />;
             })}
             {sending && <SkeletonDemo />}
           </>

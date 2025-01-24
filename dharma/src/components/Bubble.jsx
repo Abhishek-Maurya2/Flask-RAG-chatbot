@@ -10,6 +10,7 @@ import {
   Clipboard,
   Pencil,
   Trash2,
+  Delete,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AnimatedButton } from "./ThemeToggleButton";
+import useMessageStore from "@/store/useMessageStore";
 
 const processBlocks = (block, index) => {
   const lines = block.split("\n");
@@ -279,8 +281,7 @@ const handleSpeak = async (msg) => {
   }
 };
 
-const Bubbles = ({ message }) => {
-  // console.log(message.content);
+const Bubbles = ({ message, idx }) => {
   const theme = useThemeStore((state) => state.theme);
   const userFormattedText = (text) => {
     if (text.includes("Context: ")) {
@@ -289,6 +290,16 @@ const Bubbles = ({ message }) => {
     return text;
   };
   const [hover, setHover] = useState(false);
+
+  const DeleteMessage = async (idx) => {
+    const { conversationId } = useMessageStore.getState();
+    try {
+      const url = `${import.meta.env.VITE_URL}/delete/${conversationId}/${idx}`;
+      await axios.delete(url);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <>
@@ -317,7 +328,6 @@ const Bubbles = ({ message }) => {
                     </DropdownMenuTrigger>
 
                     <DropdownMenuContent className="rounded-2xl p-2">
-
                       <DropdownMenuItem className="rounded-full">
                         <Button
                           onClick={() => {
@@ -349,8 +359,8 @@ const Bubbles = ({ message }) => {
                       <DropdownMenuItem className="rounded-full">
                         <Button
                           onClick={() => {
-                            navigator.clipboard.writeText(message.content);
-                            toast.success("Copied to clipboard");
+                            DeleteMessage(idx);
+                            toast.success("Message Deleted");
                           }}
                           variant="ghost"
                           size="icon"

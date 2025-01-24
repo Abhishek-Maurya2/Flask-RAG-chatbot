@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, render_template
-from utils.logic import get_bot_response, conversations, sys_prompt
+from utils.logic import get_bot_response, conversations, sys_prompt, set_sys_prompt
 # from twilio.twiml.messaging_response import MessagingResponse
 
 
@@ -38,6 +38,42 @@ def delete_conversation(conversation_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@routes_blueprint.route("/delete/<conversation_id>/<idx>", methods=["DELETE"])
+def delete_message(conversation_id, idx):
+    idx = int(idx)
+    try:
+        # remove everything after the index idx where idx is the index of the message where role is user
+        count = 0
+        for i, msg in enumerate(conversations[conversation_id]):
+            if msg["role"] == "user":
+                count += 1
+            if count == idx:
+                idx = i
+                break
+        
+        conversations[conversation_id] = conversations[conversation_id][:idx]
+        return jsonify({"message": "Message deleted"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# @routes_blueprint.route("/edit/<conversation_id>/<idx>", methods=["POST"])
+# def edit_message(conversation_id, idx):
+#     idx = int(idx)
+#     try:
+#         # remove everything after the index idx where idx is the index of the message where role is user
+#         count = 0
+#         for i, msg in enumerate(conversations[conversation_id]):
+#             if msg["role"] == "user":
+#                 count += 1
+#             if count == idx:
+#                 idx = i
+#                 break
+        
+#         conversations[conversation_id] = conversations[conversation_id][:idx]
+#         return jsonify({"message": "Message deleted"}), 200
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
+
 @routes_blueprint.route("/history")
 def list_history():
     history = jsonify(conversations)
@@ -59,14 +95,15 @@ def get_history(conversation_id):
 def set_system_prompt():
     try:
         sys_prompt = request.form.get("system_prompt")
-        return jsonify({"message": "System prompt updated"})
+        set_sys_prompt(sys_prompt)
+        return jsonify({"message": "System prompt updated"}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @routes_blueprint.route("/get-system-prompt")
 def get_system_prompt():
-    return jsonify({"system_prompt": sys_prompt})
+    return jsonify({"system_prompt": sys_prompt}) if sys_prompt else jsonify({"message": "No system prompt set"})
 
 # @routes_blueprint.route("/whatsapp", methods=['GET', 'POST'])
 # def whatsapp():

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, render_template
-from utils.logic import get_bot_response, conversations, sys_prompt, set_sys_prompt
+from utils.logic import get_bot_response, conversations, get_sys_prompt, set_sys_prompt
 # from twilio.twiml.messaging_response import MessagingResponse
 
 
@@ -94,8 +94,8 @@ def get_history(conversation_id):
 @routes_blueprint.route("/set-system-prompt", methods=["POST"])
 def set_system_prompt():
     try:
-        sys_prompt = request.form.get("system_prompt")
-        set_sys_prompt(sys_prompt)
+        x = request.form.get("system_prompt")
+        set_sys_prompt(x)
         return jsonify({"message": "System prompt updated"}), 200
 
     except Exception as e:
@@ -103,7 +103,10 @@ def set_system_prompt():
 
 @routes_blueprint.route("/get-system-prompt")
 def get_system_prompt():
-    return jsonify({"system_prompt": sys_prompt}) if sys_prompt else jsonify({"message": "No system prompt set"})
+    try:
+        return jsonify({"system_prompt": get_sys_prompt()}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # @routes_blueprint.route("/whatsapp", methods=['GET', 'POST'])
 # def whatsapp():

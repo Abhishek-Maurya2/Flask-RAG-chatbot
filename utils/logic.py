@@ -17,14 +17,12 @@ def set_sys_prompt(value: str) -> None:
 def get_sys_prompt() -> str:
     return sys_prompt or DEFAULT_SYSTEM_PROMPT
 
-
 def _initialize_conversation(conversation_id: str) -> None:
     if conversation_id not in conversations:
         conversations[conversation_id] = [{
             "role": "system",
             "content": sys_prompt or DEFAULT_SYSTEM_PROMPT
         }]
-
 
 TOOLS = {
     "newsFinder": newsFinder,
@@ -34,7 +32,8 @@ TOOLS = {
     "generate_qr_code": generate_qr_code,
     "WikipediaSearch": wikipediaSearch,
     "code_executor": code_executor,
-    "sendEmail": sendEmail
+    "sendEmail": sendEmail,
+    "deepSearch": deepSearch
 }
 
 def _handleTools(tool_calls, conversation_id):
@@ -87,12 +86,13 @@ def get_bot_response(user_query, conversation_id):
             model = "llama-3.3-70b-versatile",
             tools=my_local_tools,
             tool_choice="auto",
+            temperature=0.5,
         )
         
         
         tool_calls = response.choices[0].message.tool_calls
         
-        if not tool_calls and len(response.choices[0].message.content) < 70:
+        if not tool_calls and len(response.choices[0].message.content) < 70 and len(response.choices[0].message.content) > 35:
             tool_calls = get_tool(response.choices[0].message.content)
             if tool_calls:
                 response.choices[0].message.tool_calls = tool_calls

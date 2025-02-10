@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import os
 from dotenv import load_dotenv
 from tools.news import main
+from tools.deepSearch import ai_agent_generate_report
 
 load_dotenv()
 
@@ -169,7 +170,7 @@ my_local_tools = [
                 },
             },
         }
-    }
+    },
 ]
 
 def newsFinder(query: str) -> str:
@@ -205,7 +206,8 @@ def imageSearch(query: str) ->str:
         "cx": os.getenv("GOOGLE_SEARCH_ENGINE_ID"),
         "q": query,
         "searchType": "image",
-
+        "gl": "in",
+        "num": 10,
     }
     response = requests.get(url, params=params)
     data = response.json()["items"]
@@ -236,23 +238,6 @@ def read_website(url: str) -> str:
     paragraphs = soup.find_all("p")
     return "\n\n".join([p.get_text() for p in paragraphs])
 
-def generate_qr_code(data: str) -> str:
-    """Generate QR code and return as base64 string"""
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data(data)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    
-    # Convert to base64
-    buffered = io.BytesIO()
-    img.save(buffered, format="PNG")
-    return base64.b64encode(buffered.getvalue()).decode()
-
 def wikipediaSearch(query: str) -> str:
     """"search wikipedia for the query and return the texts on the webpage"""
     texts = ""
@@ -276,17 +261,28 @@ def wikipediaSearch(query: str) -> str:
     except Exception as e:
         return f"Error searching Wikipedia: {str(e)}"
 
+def generate_qr_code(data: str) -> str:
+    """Generate QR code and return as base64 string"""
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Convert to base64
+    buffered = io.BytesIO()
+    img.save(buffered, format="PNG")
+    return base64.b64encode(buffered.getvalue()).decode()
+
 def code_executor(code: str) -> str:
     """Execute the python code and return the output"""
     try:
-        # send code to this url https://rag-webservice-vfpn.onrender.com/run for execution
-    #      if "error" in result:
-    #     return jsonify({"error": result["error"]}), 400
-    # return jsonify({"output": result["output"]}), 200
-    
     
         url = "https://rag-webservice-vfpn.onrender.com/run"
-        # url = "http://192.168.1.24:3200/run"
         data = {
             "code": code
         }
@@ -345,3 +341,7 @@ def sendEmail(subject:str, message:str, to_addr:str) -> str:
         print(f"Error sending email: {str(e)}")
         return "Error sending email. Please check the logs for more details."
 
+def deepSearch(query: str) -> str:
+    """Perform a deep search and return a detailed report"""
+    return ai_agent_generate_report(query)
+    

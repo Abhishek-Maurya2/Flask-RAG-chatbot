@@ -65,12 +65,12 @@
   font-size: 1em;
 }
 .markdown-container strong {
-    font-weight: bold;
-    font-size: large;
-    color: var(--light-heading);
+  font-weight: bold;
+  font-size: large;
+  color: var(--light-heading);
 }
 .dark .markdown-container strong {
-    color: var(--dark-heading);
+  color: var(--dark-heading);
 }
 
 .markdown-container a {
@@ -167,44 +167,59 @@ pre code {
 
 /* tables here */
 .markdown-container table {
-    border-collapse: separate;
-    border-spacing: 0;
-    width: 100%;
-    margin: 1em 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  margin: 1em 0;
 }
 
 .markdown-container th:first-child {
-    border-top-left-radius: 0.5em;
+  border-top-left-radius: 0.5em;
 }
 
 .markdown-container th:last-child {
-    border-top-right-radius: 0.5em;
+  border-top-right-radius: 0.5em;
 }
 
 .markdown-container tr:last-child td:first-child {
-    border-bottom-left-radius: 0.5em;
+  border-bottom-left-radius: 0.5em;
 }
 
 .markdown-container tr:last-child td:last-child {
-    border-bottom-right-radius: 0.5em;
+  border-bottom-right-radius: 0.5em;
 }
 
 .markdown-container th {
-    background-color: var(--light-code-bg);
+  background-color: var(--light-code-bg);
 }
 .dark .markdown-container th {
-    background-color: var(--dark-code-bg);
+  background-color: var(--dark-code-bg);
 }
 
 .markdown-container th,
 .markdown-container td {
-    border: 1px solid var(--light-border);
-    padding: 0.5em;
+  border: 1px solid var(--light-border);
+  padding: 0.5em;
 }
 
 .dark .markdown-container th,
 .dark .markdown-container td {
-    border: 1px solid var(--dark-border);
+  border: 1px solid var(--dark-border);
 }
 
+.markdown-container img {
+  border-radius: 0.5rem;
+  max-width: 90%;
+  max-height: 200px;
+  min-width: 100px;
+  min-height: 100px;
+  background-color: rgba(0, 0, 0, 0.559);
+}
+.dark .markdown-container img {
+  background-color: rgba(255, 255, 255, 0.559);
+}
 
+.markdown-container img:hover {
+  transform: scale(1.01);
+  transition: transform 0.5s ease-in-out;
+}

@@ -56,24 +56,6 @@ def delete_message(conversation_id, idx):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# @routes_blueprint.route("/edit/<conversation_id>/<idx>", methods=["POST"])
-# def edit_message(conversation_id, idx):
-#     idx = int(idx)
-#     try:
-#         # remove everything after the index idx where idx is the index of the message where role is user
-#         count = 0
-#         for i, msg in enumerate(conversations[conversation_id]):
-#             if msg["role"] == "user":
-#                 count += 1
-#             if count == idx:
-#                 idx = i
-#                 break
-        
-#         conversations[conversation_id] = conversations[conversation_id][:idx]
-#         return jsonify({"message": "Message deleted"}), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
 @routes_blueprint.route("/history")
 def list_history():
     history = jsonify(conversations)

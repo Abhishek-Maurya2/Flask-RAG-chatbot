@@ -6,22 +6,34 @@ from tools.parseTool import get_tool
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 conversations = {}
-sys_prompt = ""
 
-DEFAULT_SYSTEM_PROMPT = "You are Luna, an AI assistant built by Abhishek. You have realtime access to the internet and can also send email in realtime and can help with a variety of tasks."
+class SystemPromptManager:
+    DEFAULT_PROMPT = ("You are Luna, an AI assistant built by Abhishek. "
+                      "You have realtime access to the internet and can help with a variety of tasks. "
+                      "Use only one tool at a time")
+
+    def __init__(self):
+        self._prompt = SystemPromptManager.DEFAULT_PROMPT
+
+    def set(self, value: str) -> None:
+        self._prompt = value.strip() if value and value.strip() else SystemPromptManager.DEFAULT_PROMPT
+
+    def get(self) -> str:
+        return self._prompt
+
+sys_prompt_manager = SystemPromptManager()
 
 def set_sys_prompt(value: str) -> None:
-    global sys_prompt
-    sys_prompt = value or DEFAULT_SYSTEM_PROMPT
+    sys_prompt_manager.set(value)
 
 def get_sys_prompt() -> str:
-    return sys_prompt or DEFAULT_SYSTEM_PROMPT
+    return sys_prompt_manager.get()
 
 def _initialize_conversation(conversation_id: str) -> None:
     if conversation_id not in conversations:
         conversations[conversation_id] = [{
             "role": "system",
-            "content": sys_prompt or DEFAULT_SYSTEM_PROMPT
+            "content": get_sys_prompt()
         }]
 
 TOOLS = {
@@ -33,7 +45,6 @@ TOOLS = {
     "WikipediaSearch": wikipediaSearch,
     "code_executor": code_executor,
     "sendEmail": sendEmail,
-    "deepSearch": deepSearch
 }
 
 def _handleTools(tool_calls, conversation_id):

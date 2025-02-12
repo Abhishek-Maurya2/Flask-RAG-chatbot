@@ -3,38 +3,76 @@ import os
 import json
 from tools.tools import ( my_local_tools, newsFinder, webSearch, imageSearch, read_website, generate_qr_code, wikipediaSearch, code_executor, sendEmail )
 from tools.parseTool import get_tool
+from supabase import create_client, Client
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
 conversations = {}
 
 class SystemPromptManager:
-    DEFAULT_PROMPT = ("You are Luna, an AI assistant built by Abhishek. "
-                      "You have realtime access to the internet and can help with a variety of tasks. "
-                      "Use only one tool at a time")
+    __default_prompt = (
+        "You are Luna, an AI assistant built by Abhishek. "
+        "You have realtime access to the internet and can help with a variety of tasks. "
+        "Use will only use one tool at a time"
+    )
 
-    def __init__(self):
-        self._prompt = SystemPromptManager.DEFAULT_PROMPT
+    def __init__(self, prompt: str = None):
+        self._prompt = prompt.strip() if prompt and prompt.strip() else self.__default_prompt
 
-    def set(self, value: str) -> None:
-        self._prompt = value.strip() if value and value.strip() else SystemPromptManager.DEFAULT_PROMPT
-
-    def get(self) -> str:
+    @property
+    def prompt(self) -> str:
         return self._prompt
+
+    @prompt.setter
+    def prompt(self, value: str) -> None:
+        self._prompt = value.strip() if value and value.strip() else self.__default_prompt
 
 sys_prompt_manager = SystemPromptManager()
 
 def set_sys_prompt(value: str) -> None:
-    sys_prompt_manager.set(value)
+    sys_prompt_manager.prompt = value
 
 def get_sys_prompt() -> str:
-    return sys_prompt_manager.get()
+    return sys_prompt_manager.prompt
+
+def save_conversation_to_supabase(conversation_id: str) -> None:
+    try:
+        data = conversations.get(conversation_id, [])
+        supabase.table("conversations").upsert({
+            "conversation_id": conversation_id,
+            "messages": data
+        }).execute()
+    except Exception as e:
+        print(f"Error saving conversation to supabase: {str(e)}")
+
+def get_conversation_from_supabase(conversation_id: str):
+    try:
+        res = supabase.table("conversations").select("*").eq("conversation_id", conversation_id).execute()
+        if res.data:
+            return res.data[0]["messages"]
+    except Exception as e:
+        print(f"Error getting conversation from supabase: {str(e)}")
+
 
 def _initialize_conversation(conversation_id: str) -> None:
+    # if conversation_id not in conversations:
+    #     conversations[conversation_id] = [{
+    #         "role": "system",
+    #         "content": get_sys_prompt()
+    #     }]
     if conversation_id not in conversations:
-        conversations[conversation_id] = [{
-            "role": "system",
-            "content": get_sys_prompt()
-        }]
+        data = get_conversation_from_supabase(conversation_id)
+        if data:
+            conversations[conversation_id] = data
+        else:
+            conversations[conversation_id] = [{
+                "role": "system",
+                "content": get_sys_prompt()
+            }]
 
 TOOLS = {
     "newsFinder": newsFinder,
@@ -80,6 +118,7 @@ def _handleTools(tool_calls, conversation_id):
             finalRes += f"\n\n<img src='data:image/png;base64,{qr_tool}' alt='QR Code' class='rounded h-[300px] w-[300px] rouned-2xl mt-3 '/>"
         
         conversations[conversation_id].append({"role": "assistant", "content": finalRes})
+        save_conversation_to_supabase(conversation_id)
         return finalRes
     except Exception as e:
         return f"Error: {str(e)}"
@@ -116,6 +155,7 @@ def get_bot_response(user_query, conversation_id):
         
         res = response.choices[0].message.content
         conversations[conversation_id].append({"role": "assistant", "content": res})
+        save_conversation_to_supabase(conversation_id)
         return res
     
     except Exception as e:

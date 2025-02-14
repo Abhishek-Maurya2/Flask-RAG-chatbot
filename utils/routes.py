@@ -1,13 +1,12 @@
 from flask import Blueprint, request, jsonify, render_template
 from utils.logic import (
     get_bot_response,
-    conversations,
-    get_sys_prompt,
-    set_sys_prompt,
-    save_conversation_to_supabase,
     _initialize_conversation,
-    supabase,
+    switchKey,
 )
+from utils.db import (conversations, save_conversation_to_supabase, supabase,
+)
+from utils.systemPrompt import (get_sys_prompt, set_sys_prompt)
 
 routes_blueprint = Blueprint("routes_blueprint", __name__)
 
@@ -126,22 +125,12 @@ def get_system_prompt_route():
         print(f"Get system prompt error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-# Optional WhatsApp Route (Commented out)
-# @routes_blueprint.route("/whatsapp", methods=["GET", "POST"])
-# def whatsapp():
-#     from twilio.twiml.messaging_response import MessagingResponse
-#     whatsapp_client = MessagingResponse()
-#     msg = request.values.get("Body", "")
-#     number = request.values.get("From", "")
-#     
-#     try:
-#         res = get_bot_response(msg, number)
-#         if len(res) > 1000:
-#             whatsapp_client.message(res[:1000])
-#             whatsapp_client.message(res[1000:])
-#         else:
-#             whatsapp_client.message(res)
-#         return str(whatsapp_client)
-#     except Exception as e:
-#         whatsapp_client.message("Failed to process request: " + str(e))
-#         return str(whatsapp_client)
+
+@routes_blueprint.route("/switch-api", methods=["GET"])
+def switch_api():
+    try:
+        switchKey()
+        return jsonify({"message": "API key switched"}), 200
+    except Exception as e:
+        print(f"Switch API error: {str(e)}")
+        return jsonify({"error": str(e)}), 500

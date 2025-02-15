@@ -14,16 +14,15 @@ def switchKey():
 
 client = Groq(api_key= _switchKey and os.getenv("GROQ_API_KEY") or os.getenv("GROQ_API_KEY_2"))
 
-
-def _initialize_conversation(conversation_id: str) -> None:
+def _initialize_conversation(user_id: str, conversation_id: str) -> None:
     if conversation_id not in conversations:
-        data = get_conversation_from_supabase(conversation_id)
+        data = get_conversation_from_supabase(conversation_id, user_id)
         if data:
             conversations[conversation_id] = data
         else:
             conversations[conversation_id] = [{
                 "role": "system",
-                "content": get_sys_prompt()
+                "content": get_sys_prompt(user_id)
             }]
 
 TOOLS = {
@@ -75,8 +74,8 @@ def _handleTools(tool_calls, conversation_id):
     except Exception as e:
         return f"Error: {str(e)}"
     
-def get_bot_response(user_query, conversation_id):
-    _initialize_conversation(conversation_id)
+def get_bot_response(user_query, conversation_id, user_id):
+    _initialize_conversation(user_id, conversation_id)
     
     conversations[conversation_id].append({"role": "user", "content": user_query})
 
@@ -87,7 +86,6 @@ def get_bot_response(user_query, conversation_id):
             model = "llama-3.3-70b-versatile",
             tools=my_local_tools,
             tool_choice="auto",
-            temperature=0.5,
         )
         
         
@@ -106,7 +104,7 @@ def get_bot_response(user_query, conversation_id):
         
         res = response.choices[0].message.content
         conversations[conversation_id].append({"role": "assistant", "content": res})
-        save_conversation_to_supabase(conversation_id)
+        save_conversation_to_supabase(conversation_id, user_id)
         return res
     
     except Exception as e:

@@ -17,10 +17,16 @@ class SystemPromptManager:
         self._prompt = value.strip() if value and value.strip() else self.__default_prompt
 
 
-sys_prompt_manager = SystemPromptManager()
+# Remove single global manager and add a mapping for user-specific managers
+user_prompt_managers = {}
 
-def set_sys_prompt(value: str) -> None:
-    sys_prompt_manager.prompt = value
+def get_sys_prompt(user_id: str) -> str:
+    if user_id not in user_prompt_managers:
+        user_prompt_managers[user_id] = SystemPromptManager()
+    return user_prompt_managers[user_id].prompt
 
-def get_sys_prompt() -> str:
-    return sys_prompt_manager.prompt
+def set_sys_prompt(user_id: str, value: str) -> None:
+    if user_id not in user_prompt_managers:
+        user_prompt_managers[user_id] = SystemPromptManager(value)
+    else:
+        user_prompt_managers[user_id].prompt = value

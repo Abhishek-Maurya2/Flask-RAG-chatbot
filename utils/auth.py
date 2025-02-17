@@ -48,6 +48,7 @@ def login_user(email: str, password: str) -> tuple:
         res = supabase.table("users").select("*").eq("email", email).eq("password", password).execute()
         if res.data:
             return {"message": "Login successful", "data": res.data[0]}, 200
-        return {"message": "Invalid credentials"}, 401
+        else:
+            return {"error": "Invalid credentials"}, 401
     except Exception as e:
-        return {"message": str(e)}, 500
+        return {"error": str(e)}, 500

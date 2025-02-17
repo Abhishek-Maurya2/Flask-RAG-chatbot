@@ -24,13 +24,13 @@ def signup():
 @auth_blueprint.route("/login", methods=["POST"])
 def login():
     try:
-        # Retrieve login credentials from the form data
-        email = request.form.get("email", "")
-        password = request.form.get("password", "")
-
+        # Retrieve login credentials from JSON data in the POST body
+        data = request.get_json()
+        email = data.get("email", "")
+        password = data.get("password", "")
+        
         # Attempt to login the user and capture the result and status code
         result, status_code = login_user(email, password)
-
         return jsonify(result), status_code
 
     except Exception as e:

@@ -7,17 +7,16 @@ auth_blueprint = Blueprint("auth_blueprint", __name__)
 def signup():
     try:
         # Retrieve signup information from the form data
-        name = request.form.get("name", "")
-        imgUrl = request.form.get("imgUrl", "")
-        email = request.form.get("email", "")
-        password = request.form.get("password", "")
-        system_prompt = request.form.get("system_prompt", "")
+        data = request.get_json()
+        name = data.get("name", "")
+        imgUrl = data.get("imgUrl", "")
+        email = data.get("email", "")
+        password = data.get("password", "")
+        system_prompt = data.get("system_prompt", "")
 
         # Register the user and capture the result and status code
         result, status_code = register_user(name, imgUrl, email, password, system_prompt)
-
         return jsonify(result), status_code
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

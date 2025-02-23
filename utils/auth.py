@@ -1,9 +1,7 @@
-import ssl
 from utils.db import supabase
+import ssl
 
-# WARNING: Disabling certificate verification is insecure for production
 ssl._create_default_https_context = ssl._create_unverified_context
-
 
 def register_user(name: str, imgUrl: str, email: str, password: str, system_prompt: str = None) -> tuple:
     """
@@ -15,27 +13,21 @@ def register_user(name: str, imgUrl: str, email: str, password: str, system_prom
         # Check if a user with the provided email already exists
         existing = supabase.table("users").select("*").eq("email", email).execute()
         if existing.data:
-            return {"message": "User already exists with this email"}, 400
-
-        # Prepare user data payload
-        data = {
+            return {"error": "User already exists with this email"}, 400
+        
+        # Insert the new user into the database
+        user = {
             "name": name,
             "imgurl": imgUrl,
             "email": email,
-            "password": password,  # Note: Hash the password before storing in production
-            "chats": [],  # Initialize chats as an empty list
-            "system_prompt": system_prompt.strip() if system_prompt and system_prompt.strip() else "Default system prompt"
+            "password": password,
+            "system_prompt": system_prompt
         }
         
-        # Insert the new user into the database
-        res = supabase.table("users").insert(data).execute()
-        if res.error:
-            return {"message": res.error.message}, 500
-        
-        return {"message": "Registration successful", "data": res.data}, 201
-    
+        res = supabase.table("users").insert(user).execute()
+        return {"message": "User registered successfully", "data": res.data}, 200
     except Exception as e:
-        return {"message": str(e)}, 500
+        return {"error": str(e)}, 500
 
 def login_user(email: str, password: str) -> tuple:
     """

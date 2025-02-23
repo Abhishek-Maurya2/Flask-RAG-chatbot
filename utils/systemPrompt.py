@@ -1,32 +1,30 @@
-class SystemPromptManager:
-    __default_prompt = (
-        "You are Luna, an AI assistant built by Abhishek. "
-        "You have realtime access to the internet and can help with a variety of tasks. "
-        "Use will only use one tool at a time"
-    )
-
-    def __init__(self, prompt: str = None):
-        self._prompt = prompt.strip() if prompt and prompt.strip() else self.__default_prompt
-
-    @property
-    def prompt(self) -> str:
-        return self._prompt
-
-    @prompt.setter
-    def prompt(self, value: str) -> None:
-        self._prompt = value.strip() if value and value.strip() else self.__default_prompt
-
-
-# Remove single global manager and add a mapping for user-specific managers
-user_prompt_managers = {}
+DEFAULT_PROMPT = (
+    "You are Luna, an AI assistant built by Abhishek. "
+    "You have realtime access to the internet and can help with a variety of tasks. "
+    "Use will only use one tool at a time"
+)
 
 def get_sys_prompt(user_id: str) -> str:
-    if user_id not in user_prompt_managers:
-        user_prompt_managers[user_id] = SystemPromptManager()
-    return user_prompt_managers[user_id].prompt
+    from utils.db import supabase
+    try:
+        # from users table update system_prompt column with user_id
+        res = supabase.table("users")\
+            .select("system_prompt")\
+            .eq("user_id", user_id)\
+            .execute()
+        if res.data:
+            return res.data[0].get("system_prompt", DEFAULT_PROMPT)        
+    except Exception as e:
+        print(f"Error getting system prompt: {str(e)}")
+    return DEFAULT_PROMPT
 
 def set_sys_prompt(user_id: str, value: str) -> None:
-    if user_id not in user_prompt_managers:
-        user_prompt_managers[user_id] = SystemPromptManager(value)
-    else:
-        user_prompt_managers[user_id].prompt = value
+    from utils.db import supabase
+    try:
+        # from users table update system_prompt column with user_id
+        res = supabase.table("users")\
+            .update({"system_prompt": value})\
+            .eq("user_id", user_id)\
+            .execute()
+    except Exception as e:
+        print(f"Error setting system prompt: {str(e)}")

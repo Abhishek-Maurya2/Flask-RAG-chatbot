@@ -36,7 +36,7 @@ TOOLS = {
     "sendEmail": sendEmail,
 }
 
-def _handleTools(tool_calls, conversation_id):
+def _handleTools(tool_calls, conversation_id, user_id):
     qr_tool = None
     for t in tool_calls:
         name = t.function.name
@@ -69,7 +69,7 @@ def _handleTools(tool_calls, conversation_id):
             finalRes += f"\n\n<img src='data:image/png;base64,{qr_tool}' alt='QR Code' class='rounded h-[300px] w-[300px] rouned-2xl mt-3 '/>"
         
         conversations[conversation_id].append({"role": "assistant", "content": finalRes})
-        save_conversation_to_supabase(conversation_id)
+        save_conversation_to_supabase(conversation_id, user_id)
         return finalRes
     except Exception as e:
         return f"Error: {str(e)}"
@@ -99,7 +99,7 @@ def get_bot_response(user_query, conversation_id, user_id):
                 response.choices[0].message.content = None
         
         if tool_calls:  
-            return _handleTools(tool_calls, conversation_id)
+            return _handleTools(tool_calls, conversation_id, user_id)
             
         
         res = response.choices[0].message.content
